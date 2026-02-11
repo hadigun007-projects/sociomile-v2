@@ -19,4 +19,7 @@ func main() {
 
 	// 2. database migration
 	database.Migrate(db)
+
+	// 3. database seeder
+	database.SeedData(db, &cfg)
 }
