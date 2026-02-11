@@ -11,14 +11,16 @@ import (
 
 	"github.com/cinnamorollofficials/sociomile-v2/backend/config"
 	"github.com/gin-gonic/gin"
+	"gorm.io/gorm"
 )
 
 type Router struct {
 	cfg *config.Config
+	db  *gorm.DB
 }
 
-func NewRouter(cfg *config.Config) *Router {
-	return &Router{cfg: cfg}
+func NewRouter(cfg *config.Config, db *gorm.DB) *Router {
+	return &Router{cfg: cfg, db: db}
 }
 
 func (r *Router) SetupRouter() *gin.Engine {

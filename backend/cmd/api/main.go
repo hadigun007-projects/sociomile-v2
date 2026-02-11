@@ -25,6 +25,6 @@ func main() {
 	database.SeedData(db, &cfg)
 
 	// 4. run server
-	r := router.NewRouter(&cfg)
+	r := router.NewRouter(&cfg, db)
 	r.Run()
 }
