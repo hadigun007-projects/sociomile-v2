@@ -11,9 +11,12 @@ func main() {
 	cfg := config.LoadConfig()
 
 	// 1. database connection
-	_, err := database.NewMySQLConnection(&cfg)
+	db, err := database.NewMySQLConnection(&cfg)
 	if err != nil {
 		fmt.Println("Failed to connect to database")
 	}
 	fmt.Println("Database connected successfully")
+
+	// 2. database migration
+	database.Migrate(db)
 }
