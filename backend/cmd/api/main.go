@@ -1,7 +1,14 @@
 package main
 
-import "fmt"
+import (
+	"fmt"
+
+	"github.com/cinnamorollofficials/sociomile-v2/backend/config"
+)
 
 func main() {
-	fmt.Println("Hello world")
+	cfg := config.LoadConfig()
+
+	// address := fmt.Sprintf(":%s", cfg.ServerPort)
+	fmt.Printf("Server starting on port %s...\n", cfg.ServerPort)
 }
