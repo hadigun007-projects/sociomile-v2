@@ -4,6 +4,7 @@ import (
 	"fmt"
 
 	"github.com/cinnamorollofficials/sociomile-v2/backend/config"
+	"github.com/cinnamorollofficials/sociomile-v2/backend/internal/router"
 	"github.com/cinnamorollofficials/sociomile-v2/backend/pkg/database"
 )
 
@@ -22,4 +23,8 @@ func main() {
 
 	// 3. database seeder
 	database.SeedData(db, &cfg)
+
+	// 4. run server
+	r := router.NewRouter(&cfg)
+	r.Run()
 }
