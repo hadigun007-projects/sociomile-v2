@@ -10,11 +10,13 @@ import (
 
 type AuthHandler struct {
 	authService services.AuthService
+	jwtService  services.JWTService
 }
 
-func NewAuthHandler(authService services.AuthService) *AuthHandler {
+func NewAuthHandler(authService services.AuthService, jwtService services.JWTService) *AuthHandler {
 	return &AuthHandler{
 		authService: authService,
+		jwtService:  jwtService,
 	}
 }
 
@@ -31,10 +33,22 @@ func (h *AuthHandler) Login(c *gin.Context) {
 		return
 	}
 
+	token, err := h.jwtService.GenerateToken(user.ID, user.Email)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to generate token"})
+		return
+	}
+
+	refreshToken, err := h.jwtService.GenerateRefreshToken(user.ID)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to generate refresh token"})
+		return
+	}
+
 	c.JSON(http.StatusOK, gin.H{
 		"message":       "Login successful",
-		"access_token":  "test-token",
-		"refresh_token": "test-refresh-token",
+		"access_token":  token,
+		"refresh_token": refreshToken,
 		"user": gin.H{
 			"id":    user.ID,
 			"email": user.Email,

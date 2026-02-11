@@ -15,6 +15,7 @@ func Migrate(db *gorm.DB) {
 		&entity.Conversation{},
 		&entity.Message{},
 		&entity.Ticket{},
+		&entity.RefreshToken{},
 	)
 
 	if err != nil {
