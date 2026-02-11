@@ -4,11 +4,16 @@ import (
 	"fmt"
 
 	"github.com/cinnamorollofficials/sociomile-v2/backend/config"
+	"github.com/cinnamorollofficials/sociomile-v2/backend/pkg/database"
 )
 
 func main() {
 	cfg := config.LoadConfig()
 
-	// address := fmt.Sprintf(":%s", cfg.ServerPort)
-	fmt.Printf("Server starting on port %s...\n", cfg.ServerPort)
+	// 1. database connection
+	_, err := database.NewMySQLConnection(&cfg)
+	if err != nil {
+		fmt.Println("Failed to connect to database")
+	}
+	fmt.Println("Database connected successfully")
 }
