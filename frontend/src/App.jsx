@@ -8,6 +8,7 @@ import Conversations from './pages/Conversations'
 import Tenants from './pages/Tenants'
 import Tickets from './pages/Tickets'
 import Customers from './pages/Customers'
+import ChannelSimulator from './pages/ChannelSimulator'
 
 function Home() {
   return (
@@ -27,6 +28,7 @@ function App() {
     <Routes>
       <Route path="/" element={<Home />} />
       <Route path="/login" element={<Login />} />
+      <Route path="/customer-simulator" element={<ChannelSimulator />} />
 
       {/* Protected Routes */}
       <Route element={<ProtectedRoute />}>

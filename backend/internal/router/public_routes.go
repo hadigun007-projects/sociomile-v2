@@ -31,4 +31,23 @@ func (r *Router) setupPublicRoutes(router *gin.Engine) {
 	{
 		auth.POST("/login", authHandler.Login)
 	}
+
+	// channel webhook (simulated external source)
+	customerRepository := repository.NewCustomerRepository(r.db)
+	conversationRepository := repository.NewConversationRepository(r.db)
+	messageRepository := repository.NewMessageRepository(r.db)
+	channelService := services.NewChannelService(customerRepository, conversationRepository, messageRepository)
+	channelHandler := handler.NewChannelHandler(channelService)
+
+	channel := router.Group("/channel")
+	{
+		channel.POST("/webhook", channelHandler.HandleWebhook)
+	}
+
+	// public tenant list (for simulator dropdown)
+	tenantRepository := repository.NewTenantRepository(r.db)
+	tenantService := services.NewTenantService(tenantRepository, userRepository, r.cfg)
+	tenantHandler := handler.NewTenantHandler(tenantService)
+
+	router.GET("/tenants/public", tenantHandler.GetPublicTenants)
 }

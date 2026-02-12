@@ -68,3 +68,22 @@ func (h *TenantHandler) DeleteTenant(c *gin.Context) {
 
 	c.JSON(http.StatusOK, gin.H{"message": "tenant deleted successfully"})
 }
+
+func (h *TenantHandler) GetPublicTenants(c *gin.Context) {
+	tenants, err := h.tenantService.GetTenants()
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+
+	// Return only ID and Name for public consumption
+	var publicTenants []gin.H
+	for _, tenant := range tenants {
+		publicTenants = append(publicTenants, gin.H{
+			"id":   tenant.ID,
+			"name": tenant.Name,
+		})
+	}
+
+	c.JSON(http.StatusOK, gin.H{"data": publicTenants})
+}
