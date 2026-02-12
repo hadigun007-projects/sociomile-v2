@@ -1,0 +1,83 @@
+services:
+  mysql:
+    image: mysql:8.0
+    container_name: sociomile-mysql
+    restart: unless-stopped
+    environment:
+      MYSQL_ROOT_PASSWORD: ${DB_PASSWORD:-}
+      MYSQL_ALLOW_EMPTY_PASSWORD: "yes"
+      MYSQL_DATABASE: ${DB_NAME:-sociomile}
+    ports:
+      - "${DB_PORT:-3306}:3306"
+    volumes:
+      - mysql_data:/var/lib/mysql
+    networks:
+      - sociomile-network
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: sociomile-backend
+    restart: unless-stopped
+    ports:
+      - "${SERVER_PORT:-8080}:8080"
+    environment:
+      SERVER_PORT: ${SERVER_PORT:-8080}
+      DB_HOST: mysql
+      DB_PORT: 3306
+      DB_USER: ${DB_USER:-sociomile}
+      DB_PASSWORD: ${DB_PASSWORD:-}
+      DB_NAME: ${DB_NAME:-sociomile}
+      JWT_SECRET: ${JWT_SECRET:-super-secret-key}
+      OWNER_EMAIL: ${OWNER_EMAIL:-owner@sociomile.com}
+      OWNER_PASSWORD: ${OWNER_PASSWORD:-password123}
+      ADMIN_ALPHA_EMAIL: ${ADMIN_ALPHA_EMAIL:-admin.alpha@sociomile.com}
+      ADMIN_ALPHA_PASSWORD: ${ADMIN_ALPHA_PASSWORD:-password123}
+      AGENT_ALPHA_EMAIL: ${AGENT_ALPHA_EMAIL:-agent.alpha@sociomile.com}
+      AGENT_ALPHA_PASSWORD: ${AGENT_ALPHA_PASSWORD:-password123}
+      ADMIN_BETA_EMAIL: ${ADMIN_BETA_EMAIL:-admin.beta@sociomile.com}
+      ADMIN_BETA_PASSWORD: ${ADMIN_BETA_PASSWORD:-password123}
+      AGENT_BETA_EMAIL: ${AGENT_BETA_EMAIL:-agent.beta@sociomile.com}
+      AGENT_BETA_PASSWORD: ${AGENT_BETA_PASSWORD:-password123}
+      ALLOWED_ORIGINS: ${ALLOWED_ORIGINS:-http://localhost:5173}
+      ALLOW_CREDENTIALS: ${ALLOW_CREDENTIALS:-true}
+      ALLOWED_METHODS: ${ALLOWED_METHODS:-GET,POST,PUT,PATCH,DELETE,OPTIONS}
+      ALLOWED_HEADERS: ${ALLOWED_HEADERS:-Origin,Content-Type,Accept,Authorization,X-API-Key}
+      EXPOSE_HEADERS: ${EXPOSE_HEADERS:-Content-Length}
+      MAX_AGE: ${MAX_AGE:-43200}
+      API_KEY: ${API_KEY:-tfrgyihujik[uygtfucvgb]}
+    depends_on:
+      mysql:
+        condition: service_healthy
+    networks:
+      - sociomile-network
+    volumes:
+      - ./backend/storage:/app/storage
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+      args:
+        VITE_API_URL: ${VITE_API_URL:-http://localhost:8080}
+    container_name: sociomile-frontend
+    restart: unless-stopped
+    ports:
+      - "5173:80"
+    depends_on:
+      - backend
+    networks:
+      - sociomile-network
+
+networks:
+  sociomile-network:
+    driver: bridge
+
+volumes:
+  mysql_data:
