@@ -13,6 +13,7 @@ type UserRepository interface {
 	Update(user *entity.User) error
 	Delete(id, tenantID string) error
 	GetUsers(tenantID string) ([]entity.User, error)
+	GetByTenantIDWithPagination(tenantID string, page, limit int) ([]entity.User, int64, error)
 }
 
 type userRepository struct {
@@ -68,4 +69,23 @@ func (r *userRepository) GetUsers(tenantID string) ([]entity.User, error) {
 		return nil, err
 	}
 	return users, nil
+}
+
+func (r *userRepository) GetByTenantIDWithPagination(tenantID string, page, limit int) ([]entity.User, int64, error) {
+	var users []entity.User
+	var total int64
+
+	offset := (page - 1) * limit
+
+	query := r.db.Model(&entity.User{}).Where("tenant_id = ?", tenantID)
+
+	if err := query.Count(&total).Error; err != nil {
+		return nil, 0, err
+	}
+
+	if err := query.Order("created_at DESC").Offset(offset).Limit(limit).Find(&users).Error; err != nil {
+		return nil, 0, err
+	}
+
+	return users, total, nil
 }

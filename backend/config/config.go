@@ -39,6 +39,19 @@ func LoadConfig() (config Config) {
 
 	viper.AutomaticEnv()
 
+	// Explicitly bind each environment variable to handle cases where .env is missing (e.g. Docker)
+	envVars := []string{
+		"SERVER_PORT", "DB_HOST", "DB_PORT", "DB_USER", "DB_PASSWORD", "DB_NAME",
+		"JWT_SECRET", "OWNER_EMAIL", "OWNER_PASSWORD", "ADMIN_ALPHA_EMAIL",
+		"ADMIN_ALPHA_PASSWORD", "AGENT_ALPHA_EMAIL", "AGENT_ALPHA_PASSWORD",
+		"ADMIN_BETA_EMAIL", "ADMIN_BETA_PASSWORD", "AGENT_BETA_EMAIL",
+		"AGENT_BETA_PASSWORD", "ALLOWED_ORIGINS", "ALLOW_CREDENTIALS",
+		"ALLOWED_METHODS", "ALLOWED_HEADERS", "EXPOSE_HEADERS", "MAX_AGE", "API_KEY",
+	}
+	for _, envVar := range envVars {
+		viper.BindEnv(envVar)
+	}
+
 	if err := viper.ReadInConfig(); err != nil {
 		log.Printf("Warning: .env file not found, using system environment variables")
 	}

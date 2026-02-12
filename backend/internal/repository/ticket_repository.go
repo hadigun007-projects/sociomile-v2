@@ -10,6 +10,7 @@ type TicketRepository interface {
 	Assign(ticketID, userID string) error
 	FindByID(id string) (*entity.Ticket, error)
 	Update(ticket *entity.Ticket) error
+	GetByTenantIDWithPagination(tenantID string, page, limit int) ([]entity.Ticket, int64, error)
 }
 
 type ticketRepository struct {
@@ -30,7 +31,7 @@ func (r *ticketRepository) Assign(ticketID, userID string) error {
 
 func (r *ticketRepository) FindByID(id string) (*entity.Ticket, error) {
 	var ticket entity.Ticket
-	if err := r.db.First(&ticket, "id = ?", id).Error; err != nil {
+	if err := r.db.Preload("Conversation").Preload("AssignedAgent").First(&ticket, "id = ?", id).Error; err != nil {
 		return nil, err
 	}
 	return &ticket, nil
@@ -38,4 +39,23 @@ func (r *ticketRepository) FindByID(id string) (*entity.Ticket, error) {
 
 func (r *ticketRepository) Update(ticket *entity.Ticket) error {
 	return r.db.Save(ticket).Error
+}
+
+func (r *ticketRepository) GetByTenantIDWithPagination(tenantID string, page, limit int) ([]entity.Ticket, int64, error) {
+	var tickets []entity.Ticket
+	var total int64
+
+	offset := (page - 1) * limit
+
+	query := r.db.Model(&entity.Ticket{}).Where("tenant_id = ?", tenantID)
+
+	if err := query.Count(&total).Error; err != nil {
+		return nil, 0, err
+	}
+
+	if err := query.Preload("Conversation").Preload("AssignedAgent").Order("created_at DESC").Offset(offset).Limit(limit).Find(&tickets).Error; err != nil {
+		return nil, 0, err
+	}
+
+	return tickets, total, nil
 }

@@ -6,9 +6,11 @@ import (
 )
 
 type TenantRepository interface {
-	GetTenants() ([]entity.Tenant, error)
 	Create(tenant *entity.Tenant) error
-	FindByID(id string) (*entity.Tenant, error)
+	GetByID(id string) (*entity.Tenant, error)
+	GetByName(name string) (*entity.Tenant, error)
+	GetAll() ([]entity.Tenant, error)
+	GetAllWithPagination(page, limit int) ([]entity.Tenant, int64, error)
 	Update(tenant *entity.Tenant) error
 	Delete(id string) error
 }
@@ -21,7 +23,27 @@ func NewTenantRepository(db *gorm.DB) TenantRepository {
 	return &tenantRepository{db: db}
 }
 
-func (r *tenantRepository) GetTenants() ([]entity.Tenant, error) {
+func (r *tenantRepository) Create(tenant *entity.Tenant) error {
+	return r.db.Create(tenant).Error
+}
+
+func (r *tenantRepository) GetByID(id string) (*entity.Tenant, error) {
+	var tenant entity.Tenant
+	if err := r.db.Where("id = ?", id).First(&tenant).Error; err != nil {
+		return nil, err
+	}
+	return &tenant, nil
+}
+
+func (r *tenantRepository) GetByName(name string) (*entity.Tenant, error) {
+	var tenant entity.Tenant
+	if err := r.db.Where("name = ?", name).First(&tenant).Error; err != nil {
+		return nil, err
+	}
+	return &tenant, nil
+}
+
+func (r *tenantRepository) GetAll() ([]entity.Tenant, error) {
 	var tenants []entity.Tenant
 	if err := r.db.Find(&tenants).Error; err != nil {
 		return nil, err
@@ -29,16 +51,23 @@ func (r *tenantRepository) GetTenants() ([]entity.Tenant, error) {
 	return tenants, nil
 }
 
-func (r *tenantRepository) Create(tenant *entity.Tenant) error {
-	return r.db.Create(tenant).Error
-}
+func (r *tenantRepository) GetAllWithPagination(page, limit int) ([]entity.Tenant, int64, error) {
+	var tenants []entity.Tenant
+	var total int64
 
-func (r *tenantRepository) FindByID(id string) (*entity.Tenant, error) {
-	var tenant entity.Tenant
-	if err := r.db.First(&tenant, "id = ?", id).Error; err != nil {
-		return nil, err
+	offset := (page - 1) * limit
+
+	query := r.db.Model(&entity.Tenant{})
+
+	if err := query.Count(&total).Error; err != nil {
+		return nil, 0, err
 	}
-	return &tenant, nil
+
+	if err := query.Order("created_at DESC").Offset(offset).Limit(limit).Find(&tenants).Error; err != nil {
+		return nil, 0, err
+	}
+
+	return tenants, total, nil
 }
 
 func (r *tenantRepository) Update(tenant *entity.Tenant) error {

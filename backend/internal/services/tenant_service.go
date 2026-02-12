@@ -14,7 +14,8 @@ import (
 
 type TenantService interface {
 	GetTenants() ([]entity.Tenant, error)
-	CreateTenant(input dto.CreateTenantRequest) (*entity.Tenant, error)
+	GetTenantsWithPagination(page, limit int) ([]entity.Tenant, int64, error)
+	CreateTenant(req dto.CreateTenantRequest) (*entity.Tenant, error)
 	UpdateTenant(id string, input map[string]interface{}) (*entity.Tenant, error)
 	DeleteTenant(id string) error
 }
@@ -30,14 +31,18 @@ func NewTenantService(tenantRepo repository.TenantRepository, userRepo repositor
 }
 
 func (s *tenantService) GetTenants() ([]entity.Tenant, error) {
-	return s.tenantRepo.GetTenants()
+	return s.tenantRepo.GetAll()
 }
 
-func (s *tenantService) CreateTenant(input dto.CreateTenantRequest) (*entity.Tenant, error) {
+func (s *tenantService) GetTenantsWithPagination(page, limit int) ([]entity.Tenant, int64, error) {
+	return s.tenantRepo.GetAllWithPagination(page, limit)
+}
+
+func (s *tenantService) CreateTenant(req dto.CreateTenantRequest) (*entity.Tenant, error) {
 	// 1. Create Tenant
 	tenant := &entity.Tenant{
-		Name: input.Name,
-		Plan: input.Plan,
+		Name: req.Name,
+		Plan: req.Plan,
 	}
 
 	if err := s.tenantRepo.Create(tenant); err != nil {
@@ -45,7 +50,7 @@ func (s *tenantService) CreateTenant(input dto.CreateTenantRequest) (*entity.Ten
 	}
 
 	// 2. Hash Password
-	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(input.AdminPassword), bcrypt.DefaultCost)
+	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(req.AdminPassword), bcrypt.DefaultCost)
 	if err != nil {
 		return nil, fmt.Errorf("failed to hash password: %w", err)
 	}
@@ -53,14 +58,13 @@ func (s *tenantService) CreateTenant(input dto.CreateTenantRequest) (*entity.Ten
 	// 3. Create Default Admin User
 	adminUser := &entity.User{
 		TenantID: tenant.ID,
-		Email:    input.AdminEmail,
+		Email:    req.AdminEmail,
 		Password: string(hashedPassword),
-		Role:     "admin", // Fixed as admin for the first user
+		Role:     "admin",
 	}
 
 	if err := s.userRepo.Create(adminUser); err != nil {
-		// Ideally we should rollback tenant creation here if not using transaction
-		// For simplicity, we just return error. In production, use transaction.
+		// Ideally rollback
 		return nil, fmt.Errorf("failed to create admin user: %w", err)
 	}
 
@@ -68,7 +72,7 @@ func (s *tenantService) CreateTenant(input dto.CreateTenantRequest) (*entity.Ten
 }
 
 func (s *tenantService) UpdateTenant(id string, input map[string]interface{}) (*entity.Tenant, error) {
-	tenant, err := s.tenantRepo.FindByID(id)
+	tenant, err := s.tenantRepo.GetByID(id)
 	if err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
 			return nil, fmt.Errorf("tenant not found")

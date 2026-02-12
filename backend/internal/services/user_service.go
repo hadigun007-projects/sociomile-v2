@@ -13,6 +13,7 @@ import (
 
 type UserService interface {
 	GetUsers(tenantID string) ([]entity.User, error)
+	GetUsersWithPagination(tenantID string, page, limit int) ([]entity.User, int64, error)
 	UpdateUser(id, tenantID string, input map[string]interface{}) (*entity.User, error)
 	DeleteUser(id, tenantID string) error
 	CreateUser(user *entity.User) error
@@ -29,6 +30,10 @@ func NewUserService(userRepo repository.UserRepository, cfg *config.Config) User
 
 func (s *userService) GetUsers(tenantID string) ([]entity.User, error) {
 	return s.userRepo.GetUsers(tenantID)
+}
+
+func (s *userService) GetUsersWithPagination(tenantID string, page, limit int) ([]entity.User, int64, error) {
+	return s.userRepo.GetByTenantIDWithPagination(tenantID, page, limit)
 }
 
 func (s *userService) UpdateUser(id, tenantID string, input map[string]interface{}) (*entity.User, error) {

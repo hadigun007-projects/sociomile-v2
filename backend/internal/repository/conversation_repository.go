@@ -9,6 +9,7 @@ type ConversationRepository interface {
 	FindByCustomerID(tenantID, customerID string) (*entity.Conversation, error)
 	Create(conversation *entity.Conversation) error
 	GetByTenantID(tenantID string) ([]entity.Conversation, error)
+	GetByTenantIDWithPagination(tenantID string, page, limit int) ([]entity.Conversation, int64, error)
 	FindByID(id, tenantID string) (*entity.Conversation, error)
 	Update(conversation *entity.Conversation) error
 }
@@ -45,6 +46,25 @@ func (r *conversationRepository) GetByTenantID(tenantID string) ([]entity.Conver
 		return nil, err
 	}
 	return conversations, nil
+}
+
+func (r *conversationRepository) GetByTenantIDWithPagination(tenantID string, page, limit int) ([]entity.Conversation, int64, error) {
+	var conversations []entity.Conversation
+	var total int64
+
+	offset := (page - 1) * limit
+
+	query := r.db.Model(&entity.Conversation{}).Where("tenant_id = ?", tenantID)
+
+	if err := query.Count(&total).Error; err != nil {
+		return nil, 0, err
+	}
+
+	if err := query.Preload("Messages").Preload("AssignedAgent").Preload("Ticket").Order("created_at DESC").Offset(offset).Limit(limit).Find(&conversations).Error; err != nil {
+		return nil, 0, err
+	}
+
+	return conversations, total, nil
 }
 
 func (r *conversationRepository) FindByID(id, tenantID string) (*entity.Conversation, error) {

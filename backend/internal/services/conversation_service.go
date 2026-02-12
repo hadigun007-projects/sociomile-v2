@@ -15,6 +15,7 @@ type ConversationService interface {
 	AssignAgent(conversationID, tenantID, agentID string) (*entity.Conversation, error)
 	ReplyToConversation(conversationID, tenantID, message string) error
 	EscalateToTicket(conversationID, tenantID, title, description string) (*entity.Ticket, error)
+	GetConversationsWithPagination(tenantID string, page, limit int) ([]entity.Conversation, int64, error)
 }
 
 type conversationService struct {
@@ -37,6 +38,10 @@ func NewConversationService(
 
 func (s *conversationService) GetConversations(tenantID string) ([]entity.Conversation, error) {
 	return s.conversationRepo.GetByTenantID(tenantID)
+}
+
+func (s *conversationService) GetConversationsWithPagination(tenantID string, page, limit int) ([]entity.Conversation, int64, error) {
+	return s.conversationRepo.GetByTenantIDWithPagination(tenantID, page, limit)
 }
 
 func (s *conversationService) GetConversationByID(id, tenantID string) (*entity.Conversation, error) {
