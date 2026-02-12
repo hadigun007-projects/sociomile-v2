@@ -254,6 +254,26 @@ const ChannelSimulator = () => {
 
                             {/* Messages Area */}
                             <div className="flex-1 overflow-y-auto space-y-3 mb-4 px-2">
+                                {/* Ticket Info */}
+                                {loadedConversation.ticket && (
+                                    <div className="mb-4 bg-purple-50 p-3 rounded-lg border border-purple-100 flex items-center justify-between">
+                                        <div>
+                                            <div className="text-xs text-purple-600 font-bold uppercase tracking-wide">
+                                                Ticket #{loadedConversation.ticket.id.slice(0, 8)}
+                                            </div>
+                                            <div className="text-sm font-medium text-gray-800">
+                                                {loadedConversation.ticket.title}
+                                            </div>
+                                        </div>
+                                        <div className={`px-2 py-1 rounded text-xs font-bold uppercase ${loadedConversation.ticket.status === 'resolved' || loadedConversation.ticket.status === 'closed'
+                                            ? 'bg-green-100 text-green-700'
+                                            : 'bg-yellow-100 text-yellow-700'
+                                            }`}>
+                                            {loadedConversation.ticket.status.replace('_', ' ')}
+                                        </div>
+                                    </div>
+                                )}
+
                                 {loadedConversation.messages?.length === 0 ? (
                                     <div className="text-center text-gray-500 py-8">
                                         No messages yet
@@ -295,23 +315,29 @@ const ChannelSimulator = () => {
 
                             {/* Message Input */}
                             <div className="border-t pt-4">
-                                <form onSubmit={handleSendToConversation} className="flex gap-2">
-                                    <input
-                                        type="text"
-                                        value={message}
-                                        onChange={(e) => setMessage(e.target.value)}
-                                        required
-                                        className="flex-1 rounded-lg border border-gray-300 px-4 py-2 focus:border-purple-500 focus:outline-none focus:ring-1 focus:ring-purple-500"
-                                        placeholder="Type a message..."
-                                    />
-                                    <Button
-                                        type="submit"
-                                        isLoading={webhookMutation.isPending}
-                                        className="px-6"
-                                    >
-                                        Send
-                                    </Button>
-                                </form>
+                                {loadedConversation.ticket?.status === 'resolved' || loadedConversation.ticket?.status === 'closed' ? (
+                                    <div className="text-center py-2 bg-gray-50 rounded-lg text-gray-500 text-sm italic border border-gray-200">
+                                        This conversation has been marked as resolved. You cannot send further messages.
+                                    </div>
+                                ) : (
+                                    <form onSubmit={handleSendToConversation} className="flex gap-2">
+                                        <input
+                                            type="text"
+                                            value={message}
+                                            onChange={(e) => setMessage(e.target.value)}
+                                            required
+                                            className="flex-1 rounded-lg border border-gray-300 px-4 py-2 focus:border-purple-500 focus:outline-none focus:ring-1 focus:ring-purple-500"
+                                            placeholder="Type a message..."
+                                        />
+                                        <Button
+                                            type="submit"
+                                            isLoading={webhookMutation.isPending}
+                                            className="px-6"
+                                        >
+                                            Send
+                                        </Button>
+                                    </form>
+                                )}
                             </div>
                         </Card>
                     ) : (
