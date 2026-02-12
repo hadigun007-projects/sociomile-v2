@@ -1,7 +1,9 @@
 package handler
 
 import (
+	"math"
 	"net/http"
+	"strconv"
 
 	"github.com/cinnamorollofficials/sociomile-v2/backend/internal/handler/dto"
 	"github.com/cinnamorollofficials/sociomile-v2/backend/internal/services"
@@ -17,13 +19,34 @@ func NewTenantHandler(tenantService services.TenantService) *TenantHandler {
 }
 
 func (h *TenantHandler) GetTenants(c *gin.Context) {
-	tenants, err := h.tenantService.GetTenants()
+	// Pagination
+	page, _ := strconv.Atoi(c.DefaultQuery("page", "1"))
+	limit, _ := strconv.Atoi(c.DefaultQuery("limit", "10"))
+
+	if page < 1 {
+		page = 1
+	}
+	if limit < 1 {
+		limit = 10
+	}
+
+	tenants, total, err := h.tenantService.GetTenantsWithPagination(page, limit)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
 
-	c.JSON(http.StatusOK, gin.H{"data": tenants})
+	totalPages := int(math.Ceil(float64(total) / float64(limit)))
+
+	c.JSON(http.StatusOK, gin.H{
+		"data": tenants,
+		"meta": gin.H{
+			"page":        page,
+			"limit":       limit,
+			"total":       total,
+			"total_pages": totalPages,
+		},
+	})
 }
 
 func (h *TenantHandler) CreateTenant(c *gin.Context) {

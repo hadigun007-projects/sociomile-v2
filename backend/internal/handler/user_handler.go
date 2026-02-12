@@ -1,7 +1,9 @@
 package handler
 
 import (
+	"math"
 	"net/http"
+	"strconv"
 
 	"github.com/cinnamorollofficials/sociomile-v2/backend/internal/entity"
 	"github.com/cinnamorollofficials/sociomile-v2/backend/internal/services"
@@ -23,13 +25,34 @@ func (h *UserHandler) GetUsers(c *gin.Context) {
 		return
 	}
 
-	users, err := h.userService.GetUsers(tenantID.(string))
+	// Pagination
+	page, _ := strconv.Atoi(c.DefaultQuery("page", "1"))
+	limit, _ := strconv.Atoi(c.DefaultQuery("limit", "10"))
+
+	if page < 1 {
+		page = 1
+	}
+	if limit < 1 {
+		limit = 10
+	}
+
+	users, total, err := h.userService.GetUsersWithPagination(tenantID.(string), page, limit)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
 
-	c.JSON(http.StatusOK, gin.H{"data": users})
+	totalPages := int(math.Ceil(float64(total) / float64(limit)))
+
+	c.JSON(http.StatusOK, gin.H{
+		"data": users,
+		"meta": gin.H{
+			"page":        page,
+			"limit":       limit,
+			"total":       total,
+			"total_pages": totalPages,
+		},
+	})
 }
 
 func (h *UserHandler) UpdateUser(c *gin.Context) {

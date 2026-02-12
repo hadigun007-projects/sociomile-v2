@@ -11,16 +11,22 @@ const Conversations = () => {
     const [selectedConversation, setSelectedConversation] = useState(null);
     const [isAssignModalOpen, setIsAssignModalOpen] = useState(false);
     const [isViewModalOpen, setIsViewModalOpen] = useState(false);
+    const [page, setPage] = useState(1);
+    const limit = 10;
 
     const currentUser = JSON.parse(localStorage.getItem('user') || '{}');
     const isAgent = currentUser.role === 'agent';
-    const { data: conversations = [], isLoading } = useQuery({
-        queryKey: ['conversations'],
+    const { data, isLoading } = useQuery({
+        queryKey: ['conversations', page, limit],
         queryFn: async () => {
-            const response = await api.get('/conversations');
-            return response.data.data;
+            const response = await api.get(`/conversations?page=${page}&limit=${limit}`);
+            return response.data;
         },
+        keepPreviousData: true,
     });
+
+    const conversations = data?.data || [];
+    const meta = data?.meta || { total_pages: 1 };
 
     const columns = [
         { key: 'id', label: 'ID' },
@@ -81,6 +87,9 @@ const Conversations = () => {
                     columns={columns}
                     data={conversations}
                     emptyMessage="No conversations found"
+                    currentPage={page}
+                    totalPages={meta.total_pages}
+                    onPageChange={setPage}
                     actions={(row) => (
                         <div className="flex gap-2">
                             {!isAgent && !row.assigned_agent_id && (
