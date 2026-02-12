@@ -1,7 +1,7 @@
 package main
 
 import (
-	"fmt"
+	"log"
 
 	"github.com/cinnamorollofficials/sociomile-v2/backend/config"
 	"github.com/cinnamorollofficials/sociomile-v2/backend/internal/router"
@@ -14,9 +14,9 @@ func main() {
 	// 1. database connection
 	db, err := database.NewMySQLConnection(&cfg)
 	if err != nil {
-		fmt.Println("Failed to connect to database")
+		log.Fatal("Failed to connect to database: ", err)
 	}
-	fmt.Println("Database connected successfully")
+	log.Println("Database connected successfully")
 
 	// 2. database migration
 	database.Migrate(db)
