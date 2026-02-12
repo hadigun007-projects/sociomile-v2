@@ -39,13 +39,16 @@ const ChannelSimulator = () => {
             return response.data;
         },
         onSuccess: (data, variables) => {
-            if (variables.conversation_id) {
-                // If sending to existing conversation, reload it
+            const convId = variables.conversation_id || data.data.conversation_id;
+            if (convId) {
+                // If sending to existing conversation or just created one, reload it
                 setResponseMessage('Message sent successfully!');
                 setMessage('');
-                loadConversationMutation.mutate(variables.conversation_id);
+                loadConversationMutation.mutate(convId);
+                if (!conversationId) setConversationId(convId);
+                if (mode === 'new') setMode('existing');
             } else {
-                setResponseMessage(`Message sent successfully! Conversation created for customer ${data.data.customer_external_id}`);
+                setResponseMessage(`Message sent successfully! Customer ID: ${data.data.customer_external_id}`);
                 setMessage('');
             }
         },
@@ -91,11 +94,13 @@ const ChannelSimulator = () => {
 
     const handleSendToConversation = (e) => {
         e.preventDefault();
+        if (!message.trim() || !loadedConversation) return;
+
         setResponseMessage('');
         webhookMutation.mutate({
-            tenant_id: loadedConversation.tenant_id,
-            conversation_id: conversationId,
-            message: message,
+            tenant_id: loadedConversation.tenant_id, // Use ID from loaded data
+            conversation_id: loadedConversation.id,
+            message: message.trim(),
         });
     };
 
@@ -254,34 +259,36 @@ const ChannelSimulator = () => {
                                         No messages yet
                                     </div>
                                 ) : (
-                                    loadedConversation.messages?.map((msg, idx) => (
-                                        <div
-                                            key={msg.id || idx}
-                                            className={`flex ${msg.sender_type === 'customer' ? 'justify-start' : 'justify-end'}`}
-                                        >
+                                    [...(loadedConversation.messages || [])]
+                                        .sort((a, b) => new Date(a.created_at) - new Date(b.created_at))
+                                        .map((msg, idx) => (
                                             <div
-                                                className={`max-w-[70%] rounded-lg px-4 py-2 ${msg.sender_type === 'customer'
-                                                    ? 'bg-gray-100 text-gray-800'
-                                                    : 'bg-purple-600 text-white'
-                                                    }`}
+                                                key={msg.id || idx}
+                                                className={`flex ${msg.sender_type === 'customer' ? 'justify-end' : 'justify-start'}`}
                                             >
-                                                <div className={`text-xs mb-1 font-medium ${msg.sender_type === 'customer' ? 'text-gray-500' : 'text-purple-200'
-                                                    }`}>
-                                                    {msg.sender_type === 'customer' ? 'Customer' : 'Agent'}
-                                                </div>
-                                                <div className="text-sm break-words">{msg.message}</div>
-                                                {msg.created_at && (
-                                                    <div className={`text-xs mt-1 ${msg.sender_type === 'customer' ? 'text-gray-400' : 'text-purple-200'
+                                                <div
+                                                    className={`max-w-[70%] rounded-lg px-4 py-2 ${msg.sender_type === 'customer'
+                                                        ? 'bg-purple-600 text-white'
+                                                        : 'bg-gray-100 text-gray-800'
+                                                        }`}
+                                                >
+                                                    <div className={`text-xs mb-1 font-medium ${msg.sender_type === 'customer' ? 'text-purple-200' : 'text-gray-500'
                                                         }`}>
-                                                        {new Date(msg.created_at).toLocaleTimeString('id-ID', {
-                                                            hour: '2-digit',
-                                                            minute: '2-digit'
-                                                        })}
+                                                        {msg.sender_type === 'customer' ? 'Customer' : 'Agent'}
                                                     </div>
-                                                )}
+                                                    <div className="text-sm break-words">{msg.message}</div>
+                                                    {msg.created_at && (
+                                                        <div className={`text-xs mt-1 ${msg.sender_type === 'customer' ? 'text-purple-200' : 'text-gray-400'
+                                                            }`}>
+                                                            {new Date(msg.created_at).toLocaleTimeString('id-ID', {
+                                                                hour: '2-digit',
+                                                                minute: '2-digit'
+                                                            })}
+                                                        </div>
+                                                    )}
+                                                </div>
                                             </div>
-                                        </div>
-                                    ))
+                                        ))
                                 )}
                                 <div ref={messagesEndRef} />
                             </div>
@@ -332,7 +339,7 @@ const ChannelSimulator = () => {
                                         3
                                     </span>
                                     <p>
-                                        <strong>Chat Interface:</strong> Customer messages appear on the left (gray), agent messages on the right (purple)
+                                        <strong>Chat Interface:</strong> Your messages (customer) appear on the right (purple), agent messages on the left (gray)
                                     </p>
                                 </div>
                             </div>
