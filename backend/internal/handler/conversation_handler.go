@@ -22,12 +22,28 @@ func (h *ConversationHandler) GetConversations(c *gin.Context) {
 		return
 	}
 
+	userRole, _ := c.Get("user_role")
+	userID, _ := c.Get("user_id")
+
 	conversations, err := h.conversationService.GetConversations(tenantID.(string))
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
 
+	// Filter for agents: only show conversations assigned to them
+	if userRole == "agent" && userID != nil {
+		filtered := []interface{}{}
+		for _, conv := range conversations {
+			if conv.AssignedAgentID != nil && *conv.AssignedAgentID == userID.(string) {
+				filtered = append(filtered, conv)
+			}
+		}
+		c.JSON(http.StatusOK, gin.H{"data": filtered})
+		return
+	}
+
+	// Admins see all conversations
 	c.JSON(http.StatusOK, gin.H{"data": conversations})
 }
 

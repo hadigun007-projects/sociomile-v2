@@ -3,7 +3,9 @@ import { Card } from './Card';
 const ViewConversationModal = ({ isOpen, onClose, conversation }) => {
     if (!isOpen || !conversation) return null;
 
-    const messages = conversation.messages || [];
+    const messages = (conversation.messages || []).sort((a, b) =>
+        new Date(a.created_at) - new Date(b.created_at)
+    );
 
     return (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
@@ -15,8 +17,8 @@ const ViewConversationModal = ({ isOpen, onClose, conversation }) => {
                         <div className="flex gap-4 mt-2 text-sm text-gray-600">
                             <span className="font-mono">ID: {conversation.id.slice(0, 8)}...</span>
                             <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${conversation.status === 'open' ? 'bg-green-100 text-green-700' :
-                                    conversation.status === 'assigned' ? 'bg-blue-100 text-blue-700' :
-                                        'bg-gray-100 text-gray-700'
+                                conversation.status === 'assigned' ? 'bg-blue-100 text-blue-700' :
+                                    'bg-gray-100 text-gray-700'
                                 }`}>
                                 {conversation.status}
                             </span>
@@ -49,8 +51,8 @@ const ViewConversationModal = ({ isOpen, onClose, conversation }) => {
                             >
                                 <div
                                     className={`max-w-[70%] rounded-lg px-4 py-2 ${msg.sender_type === 'customer'
-                                            ? 'bg-gray-100 text-gray-800'
-                                            : 'bg-purple-600 text-white'
+                                        ? 'bg-gray-100 text-gray-800'
+                                        : 'bg-purple-600 text-white'
                                         }`}
                                 >
                                     <div className="text-xs opacity-70 mb-1">

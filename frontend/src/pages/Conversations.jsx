@@ -5,11 +5,15 @@ import { DataTable } from '../components/DataTable';
 import { Card } from '../components/Card';
 import AssignAgentModal from '../components/AssignAgentModal';
 import ViewConversationModal from '../components/ViewConversationModal';
+import AgentChatModal from '../components/AgentChatModal';
 
 const Conversations = () => {
     const [selectedConversation, setSelectedConversation] = useState(null);
     const [isAssignModalOpen, setIsAssignModalOpen] = useState(false);
     const [isViewModalOpen, setIsViewModalOpen] = useState(false);
+
+    const currentUser = JSON.parse(localStorage.getItem('user') || '{}');
+    const isAgent = currentUser.role === 'agent';
     const { data: conversations = [], isLoading } = useQuery({
         queryKey: ['conversations'],
         queryFn: async () => {
@@ -79,7 +83,7 @@ const Conversations = () => {
                     emptyMessage="No conversations found"
                     actions={(row) => (
                         <div className="flex gap-2">
-                            {!row.assigned_agent_id && (
+                            {!isAgent && !row.assigned_agent_id && (
                                 <button
                                     onClick={() => handleAssign(row)}
                                     className="text-purple-600 hover:text-purple-700 font-medium text-sm"
@@ -98,19 +102,29 @@ const Conversations = () => {
                 />
             </Card>
 
-            {/* Assign Agent Modal */}
-            <AssignAgentModal
-                isOpen={isAssignModalOpen}
-                onClose={() => setIsAssignModalOpen(false)}
-                conversation={selectedConversation}
-            />
+            {/* Assign Agent Modal (Admin only) */}
+            {!isAgent && (
+                <AssignAgentModal
+                    isOpen={isAssignModalOpen}
+                    onClose={() => setIsAssignModalOpen(false)}
+                    conversation={selectedConversation}
+                />
+            )}
 
-            {/* View Conversation Modal */}
-            <ViewConversationModal
-                isOpen={isViewModalOpen}
-                onClose={() => setIsViewModalOpen(false)}
-                conversation={selectedConversation}
-            />
+            {/* View Conversation Modal - Different for Admin vs Agent */}
+            {isAgent ? (
+                <AgentChatModal
+                    isOpen={isViewModalOpen}
+                    onClose={() => setIsViewModalOpen(false)}
+                    conversation={selectedConversation}
+                />
+            ) : (
+                <ViewConversationModal
+                    isOpen={isViewModalOpen}
+                    onClose={() => setIsViewModalOpen(false)}
+                    conversation={selectedConversation}
+                />
+            )}
 
             {/* Stats Cards */}
             <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
