@@ -24,6 +24,7 @@ type Config struct {
 	AllowedHeaders   string `mapstructure:"ALLOWED_HEADERS"`
 	ExposeHeaders    string `mapstructure:"EXPOSE_HEADERS"`
 	MaxAge           int    `mapstructure:"MAX_AGE"`
+	APIKey           string `mapstructure:"API_KEY"`
 }
 
 func LoadConfig() (config Config) {

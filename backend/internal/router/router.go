@@ -34,6 +34,9 @@ func (r *Router) SetupRouter() *gin.Engine {
 	// Setup public routes
 	r.setupPublicRoutes(router)
 
+	// private routes
+	r.setupPrivateRoutes(router)
+
 	return router
 }
 

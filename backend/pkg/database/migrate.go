@@ -9,9 +9,9 @@ import (
 
 func Migrate(db *gorm.DB) {
 	err := db.AutoMigrate(
-		&entity.Tenant{},
 		&entity.User{},
-		&entity.Customer{},
+		&entity.RefreshToken{},
+		&entity.Tenant{},
 		&entity.Conversation{},
 		&entity.Message{},
 		&entity.Ticket{},
