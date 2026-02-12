@@ -30,6 +30,7 @@ func (r *Router) SetupRouter() *gin.Engine {
 
 	// middleware
 	router.Use(middleware.CORS(*r.cfg))
+	router.Use(middleware.LoggerMiddleware("storage/logs"))
 
 	// Setup public routes
 	r.setupPublicRoutes(router)
