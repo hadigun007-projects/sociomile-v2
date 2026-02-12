@@ -12,6 +12,7 @@ func Migrate(db *gorm.DB) {
 		&entity.Tenant{},
 		&entity.User{},
 		&entity.RefreshToken{},
+		&entity.Customer{},
 		&entity.Conversation{},
 		&entity.Message{},
 		&entity.Ticket{},

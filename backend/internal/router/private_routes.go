@@ -42,4 +42,30 @@ func (r *Router) setupPrivateRoutes(router *gin.Engine) {
 		userRoutes.PUT("/:id", userHandler.UpdateUser)
 		userRoutes.DELETE("/:id", userHandler.DeleteUser)
 	}
+
+	// Conversation Routes (Admin, Agent)
+	conversationRepository := repository.NewConversationRepository(r.db)
+	messageRepository := repository.NewMessageRepository(r.db)
+	conversationService := services.NewConversationService(conversationRepository, messageRepository)
+	conversationHandler := handler.NewConversationHandler(conversationService)
+
+	conversationRoutes := privateRoute.Group("/conversations")
+	conversationRoutes.Use(middleware.RBACMiddleware("admin", "agent"))
+	{
+		conversationRoutes.GET("", conversationHandler.GetConversations)
+		conversationRoutes.GET("/:id", conversationHandler.GetConversationByID)
+		conversationRoutes.PUT("/:id/assign", conversationHandler.AssignAgent)
+		conversationRoutes.POST("/:id/reply", conversationHandler.ReplyToConversation)
+	}
+
+	// Customer Routes (Admin, Agent)
+	customerRepository := repository.NewCustomerRepository(r.db)
+	customerService := services.NewCustomerService(customerRepository)
+	customerHandler := handler.NewCustomerHandler(customerService)
+
+	customerRoutes := privateRoute.Group("/customers")
+	customerRoutes.Use(middleware.RBACMiddleware("admin", "agent"))
+	{
+		customerRoutes.GET("", customerHandler.GetCustomers)
+	}
 }

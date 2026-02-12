@@ -8,6 +8,9 @@ import (
 type ConversationRepository interface {
 	FindByCustomerID(tenantID, customerID string) (*entity.Conversation, error)
 	Create(conversation *entity.Conversation) error
+	GetByTenantID(tenantID string) ([]entity.Conversation, error)
+	FindByID(id, tenantID string) (*entity.Conversation, error)
+	Update(conversation *entity.Conversation) error
 }
 
 type conversationRepository struct {
@@ -30,4 +33,29 @@ func (r *conversationRepository) FindByCustomerID(tenantID, customerID string) (
 
 func (r *conversationRepository) Create(conversation *entity.Conversation) error {
 	return r.db.Create(conversation).Error
+}
+
+func (r *conversationRepository) GetByTenantID(tenantID string) ([]entity.Conversation, error) {
+	var conversations []entity.Conversation
+	if err := r.db.Where("tenant_id = ?", tenantID).
+		Preload("Messages").
+		Order("created_at DESC").
+		Find(&conversations).Error; err != nil {
+		return nil, err
+	}
+	return conversations, nil
+}
+
+func (r *conversationRepository) FindByID(id, tenantID string) (*entity.Conversation, error) {
+	var conversation entity.Conversation
+	if err := r.db.Where("id = ? AND tenant_id = ?", id, tenantID).
+		Preload("Messages").
+		First(&conversation).Error; err != nil {
+		return nil, err
+	}
+	return &conversation, nil
+}
+
+func (r *conversationRepository) Update(conversation *entity.Conversation) error {
+	return r.db.Save(conversation).Error
 }

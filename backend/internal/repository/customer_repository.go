@@ -8,6 +8,7 @@ import (
 type CustomerRepository interface {
 	FindByExternalID(tenantID, externalID string) (*entity.Customer, error)
 	Create(customer *entity.Customer) error
+	GetByTenantID(tenantID string) ([]entity.Customer, error)
 }
 
 type customerRepository struct {
@@ -28,4 +29,12 @@ func (r *customerRepository) FindByExternalID(tenantID, externalID string) (*ent
 
 func (r *customerRepository) Create(customer *entity.Customer) error {
 	return r.db.Create(customer).Error
+}
+
+func (r *customerRepository) GetByTenantID(tenantID string) ([]entity.Customer, error) {
+	var customers []entity.Customer
+	if err := r.db.Where("tenant_id = ?", tenantID).Order("created_at DESC").Find(&customers).Error; err != nil {
+		return nil, err
+	}
+	return customers, nil
 }
