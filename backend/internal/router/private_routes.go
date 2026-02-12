@@ -25,6 +25,12 @@ func (r *Router) setupPrivateRoutes(router *gin.Engine) {
 
 	// get tenants
 	privateRoute.GET("/tenants", tenantHandler.GetTenants)
+	// create tenant
+	privateRoute.POST("/tenants", tenantHandler.CreateTenant)
+	// update tenant
+	privateRoute.PUT("/tenants/:id", tenantHandler.UpdateTenant)
+	// delete tenant
+	privateRoute.DELETE("/tenants/:id", tenantHandler.DeleteTenant)
 	// get users
 	privateRoute.GET("/users", userHandler.GetUsers)
 	// update user

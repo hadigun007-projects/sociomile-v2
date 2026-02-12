@@ -9,13 +9,12 @@ import (
 
 func Migrate(db *gorm.DB) {
 	err := db.AutoMigrate(
+		&entity.Tenant{},
 		&entity.User{},
 		&entity.RefreshToken{},
-		&entity.Tenant{},
 		&entity.Conversation{},
 		&entity.Message{},
 		&entity.Ticket{},
-		&entity.RefreshToken{},
 	)
 
 	if err != nil {
