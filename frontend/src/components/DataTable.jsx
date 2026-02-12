@@ -2,7 +2,7 @@ import { useState, useMemo } from 'react';
 import { Card } from './Card';
 import { FaEdit, FaTrash, FaSearch } from 'react-icons/fa';
 
-export const DataTable = ({ columns, data, title, actions, onDelete, onEdit }) => {
+export const DataTable = ({ columns, data, title, actions, onDelete, onEdit, isActionDisabled }) => {
     const [searchTerm, setSearchTerm] = useState('');
 
     const filteredData = useMemo(() => {
@@ -58,12 +58,26 @@ export const DataTable = ({ columns, data, title, actions, onDelete, onEdit }) =
                                     <td className="p-4 text-right">
                                         <div className="flex justify-end gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
                                             {onEdit && (
-                                                <button onClick={() => onEdit(row)} className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors">
+                                                <button
+                                                    onClick={() => onEdit(row)}
+                                                    disabled={isActionDisabled && isActionDisabled(row)}
+                                                    className={`p-2 rounded-lg transition-colors ${isActionDisabled && isActionDisabled(row)
+                                                        ? 'text-gray-300 cursor-not-allowed'
+                                                        : 'text-blue-600 hover:bg-blue-50'
+                                                        }`}
+                                                >
                                                     <FaEdit />
                                                 </button>
                                             )}
                                             {onDelete && (
-                                                <button onClick={() => onDelete(row)} className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors">
+                                                <button
+                                                    onClick={() => onDelete(row)}
+                                                    disabled={isActionDisabled && isActionDisabled(row)}
+                                                    className={`p-2 rounded-lg transition-colors ${isActionDisabled && isActionDisabled(row)
+                                                        ? 'text-gray-300 cursor-not-allowed'
+                                                        : 'text-red-600 hover:bg-red-50'
+                                                        }`}
+                                                >
                                                     <FaTrash />
                                                 </button>
                                             )}

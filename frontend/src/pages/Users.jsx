@@ -36,19 +36,24 @@ const Users = () => {
         { key: 'id', label: 'ID' },
         { key: 'email', label: 'Email' },
         { key: 'role', label: 'Role' },
-        { key: 'tenant_id', label: 'Tenant ID' },
     ];
 
+    const currentUser = JSON.parse(localStorage.getItem('user') || '{}');
+
     const handleEdit = (user) => {
+        if (user.id === currentUser.id) return;
         setSelectedUser(user);
         setIsEditModalOpen(true);
     };
 
     const handleDelete = (user) => {
+        if (user.id === currentUser.id) return;
         if (window.confirm(`Are you sure you want to delete user ${user.email}?`)) {
             deleteMutation.mutate(user.id);
         }
     };
+
+    const isActionDisabled = (user) => user.id === currentUser.id;
 
     if (isLoading) return <div className="p-6">Loading...</div>;
     if (error) return <div className="p-6 text-red-500">Error loading users: {error.message}</div>;
@@ -71,6 +76,7 @@ const Users = () => {
                 title="System Users"
                 onEdit={handleEdit}
                 onDelete={handleDelete}
+                isActionDisabled={isActionDisabled}
             />
             {selectedUser && (
                 <EditUserModal

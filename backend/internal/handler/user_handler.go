@@ -40,6 +40,17 @@ func (h *UserHandler) UpdateUser(c *gin.Context) {
 		return
 	}
 
+	currentUserID, exists := c.Get("user_id")
+	if !exists {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "User ID not found in context"})
+		return
+	}
+
+	if id == currentUserID.(string) {
+		c.JSON(http.StatusForbidden, gin.H{"error": "You cannot update your own account"})
+		return
+	}
+
 	var input map[string]interface{}
 	if err := c.ShouldBindJSON(&input); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
@@ -60,6 +71,17 @@ func (h *UserHandler) DeleteUser(c *gin.Context) {
 	tenantID, exists := c.Get("user_tenant_id")
 	if !exists {
 		c.JSON(http.StatusUnauthorized, gin.H{"error": "Tenant ID not found in context"})
+		return
+	}
+
+	currentUserID, exists := c.Get("user_id")
+	if !exists {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "User ID not found in context"})
+		return
+	}
+
+	if id == currentUserID.(string) {
+		c.JSON(http.StatusForbidden, gin.H{"error": "You cannot delete your own account"})
 		return
 	}
 
