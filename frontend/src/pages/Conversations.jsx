@@ -4,10 +4,12 @@ import api from '../api/axios';
 import { DataTable } from '../components/DataTable';
 import { Card } from '../components/Card';
 import AssignAgentModal from '../components/AssignAgentModal';
+import ViewConversationModal from '../components/ViewConversationModal';
 
 const Conversations = () => {
     const [selectedConversation, setSelectedConversation] = useState(null);
     const [isAssignModalOpen, setIsAssignModalOpen] = useState(false);
+    const [isViewModalOpen, setIsViewModalOpen] = useState(false);
     const { data: conversations = [], isLoading } = useQuery({
         queryKey: ['conversations'],
         queryFn: async () => {
@@ -20,13 +22,27 @@ const Conversations = () => {
         { key: 'id', label: 'ID' },
         { key: 'customer_id', label: 'Customer ID' },
         { key: 'status', label: 'Status' },
-        { key: 'assigned_agent_id', label: 'Assigned Agent' },
+        {
+            key: 'assigned_agent_id',
+            label: 'Assigned Agent',
+            render: (value, row) => {
+                if (row.assigned_agent) {
+                    return row.assigned_agent.email;
+                }
+                return <span className="text-gray-400 italic">Unassigned</span>;
+            }
+        },
         { key: 'created_at', label: 'Created At' },
     ];
 
     const handleAssign = (conversation) => {
         setSelectedConversation(conversation);
         setIsAssignModalOpen(true);
+    };
+
+    const handleView = (conversation) => {
+        setSelectedConversation(conversation);
+        setIsViewModalOpen(true);
     };
 
     if (isLoading) {
@@ -71,7 +87,10 @@ const Conversations = () => {
                                     Assign
                                 </button>
                             )}
-                            <button className="text-blue-600 hover:text-blue-700 font-medium text-sm">
+                            <button
+                                onClick={() => handleView(row)}
+                                className="text-blue-600 hover:text-blue-700 font-medium text-sm"
+                            >
                                 View
                             </button>
                         </div>
@@ -83,6 +102,13 @@ const Conversations = () => {
             <AssignAgentModal
                 isOpen={isAssignModalOpen}
                 onClose={() => setIsAssignModalOpen(false)}
+                conversation={selectedConversation}
+            />
+
+            {/* View Conversation Modal */}
+            <ViewConversationModal
+                isOpen={isViewModalOpen}
+                onClose={() => setIsViewModalOpen(false)}
                 conversation={selectedConversation}
             />
 
