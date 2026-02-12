@@ -8,6 +8,8 @@ import Input from './Input';
 const AddTenantModal = ({ isOpen, onClose }) => {
     const [name, setName] = useState('');
     const [plan, setPlan] = useState('basic');
+    const [adminEmail, setAdminEmail] = useState('');
+    const [adminPassword, setAdminPassword] = useState('');
     const queryClient = useQueryClient();
 
     const createMutation = useMutation({
@@ -21,12 +23,19 @@ const AddTenantModal = ({ isOpen, onClose }) => {
             // Reset form
             setName('');
             setPlan('basic');
+            setAdminEmail('');
+            setAdminPassword('');
         },
     });
 
     const handleSubmit = async (e) => {
         e.preventDefault();
-        const data = { name, plan };
+        const data = {
+            name,
+            plan,
+            admin_email: adminEmail,
+            admin_password: adminPassword
+        };
         createMutation.mutate(data);
     };
 
@@ -81,6 +90,23 @@ const AddTenantModal = ({ isOpen, onClose }) => {
                                                     value={name}
                                                     onChange={(e) => setName(e.target.value)}
                                                     required
+                                                />
+                                                <Input
+                                                    label="Admin Email"
+                                                    type="email"
+                                                    id="admin_email"
+                                                    value={adminEmail}
+                                                    onChange={(e) => setAdminEmail(e.target.value)}
+                                                    required
+                                                />
+                                                <Input
+                                                    label="Admin Password"
+                                                    type="password"
+                                                    id="admin_password"
+                                                    value={adminPassword}
+                                                    onChange={(e) => setAdminPassword(e.target.value)}
+                                                    required
+                                                    minLength={6}
                                                 />
                                                 <div>
                                                     <label htmlFor="plan" className="block text-sm font-medium text-gray-700 mb-1">

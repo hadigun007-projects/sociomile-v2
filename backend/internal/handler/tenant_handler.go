@@ -3,7 +3,7 @@ package handler
 import (
 	"net/http"
 
-	"github.com/cinnamorollofficials/sociomile-v2/backend/internal/entity"
+	"github.com/cinnamorollofficials/sociomile-v2/backend/internal/handler/dto"
 	"github.com/cinnamorollofficials/sociomile-v2/backend/internal/services"
 	"github.com/gin-gonic/gin"
 )
@@ -27,13 +27,14 @@ func (h *TenantHandler) GetTenants(c *gin.Context) {
 }
 
 func (h *TenantHandler) CreateTenant(c *gin.Context) {
-	var tenant entity.Tenant
-	if err := c.ShouldBindJSON(&tenant); err != nil {
+	var req dto.CreateTenantRequest
+	if err := c.ShouldBindJSON(&req); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
 
-	if err := h.tenantService.CreateTenant(&tenant); err != nil {
+	tenant, err := h.tenantService.CreateTenant(req)
+	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}

@@ -16,13 +16,13 @@ func (r *Router) setupPrivateRoutes(router *gin.Engine) {
 	privateRoute.Use(middleware.JWTAuth(r.cfg.JWTSecret))
 
 	// handler
-	tenantRepository := repository.NewTenantRepository(r.db)
-	tenantService := services.NewTenantService(tenantRepository, r.cfg)
-	tenantHandler := handler.NewTenantHandler(tenantService)
-
 	userRepository := repository.NewUserRepository(r.db)
 	userService := services.NewUserService(userRepository, r.cfg)
 	userHandler := handler.NewUserHandler(userService)
+
+	tenantRepository := repository.NewTenantRepository(r.db)
+	tenantService := services.NewTenantService(tenantRepository, userRepository, r.cfg)
+	tenantHandler := handler.NewTenantHandler(tenantService)
 
 	// tenants routes (owner only)
 	tenantRoutes := privateRoute.Group("/tenants")
