@@ -10,6 +10,7 @@ import (
 	"time"
 
 	"github.com/cinnamorollofficials/sociomile-v2/backend/config"
+	"github.com/cinnamorollofficials/sociomile-v2/backend/internal/middleware"
 	"github.com/gin-gonic/gin"
 	"gorm.io/gorm"
 )
@@ -26,6 +27,9 @@ func NewRouter(cfg *config.Config, db *gorm.DB) *Router {
 func (r *Router) SetupRouter() *gin.Engine {
 
 	router := gin.New()
+
+	// middleware
+	router.Use(middleware.CORS(*r.cfg))
 
 	// Setup public routes
 	r.setupPublicRoutes(router)
