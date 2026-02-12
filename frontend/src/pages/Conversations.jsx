@@ -1,9 +1,13 @@
+import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import api from '../api/axios';
 import { DataTable } from '../components/DataTable';
 import { Card } from '../components/Card';
+import AssignAgentModal from '../components/AssignAgentModal';
 
 const Conversations = () => {
+    const [selectedConversation, setSelectedConversation] = useState(null);
+    const [isAssignModalOpen, setIsAssignModalOpen] = useState(false);
     const { data: conversations = [], isLoading } = useQuery({
         queryKey: ['conversations'],
         queryFn: async () => {
@@ -19,6 +23,11 @@ const Conversations = () => {
         { key: 'assigned_agent_id', label: 'Assigned Agent' },
         { key: 'created_at', label: 'Created At' },
     ];
+
+    const handleAssign = (conversation) => {
+        setSelectedConversation(conversation);
+        setIsAssignModalOpen(true);
+    };
 
     if (isLoading) {
         return (
@@ -52,8 +61,30 @@ const Conversations = () => {
                     columns={columns}
                     data={conversations}
                     emptyMessage="No conversations found"
+                    actions={(row) => (
+                        <div className="flex gap-2">
+                            {!row.assigned_agent_id && (
+                                <button
+                                    onClick={() => handleAssign(row)}
+                                    className="text-purple-600 hover:text-purple-700 font-medium text-sm"
+                                >
+                                    Assign
+                                </button>
+                            )}
+                            <button className="text-blue-600 hover:text-blue-700 font-medium text-sm">
+                                View
+                            </button>
+                        </div>
+                    )}
                 />
             </Card>
+
+            {/* Assign Agent Modal */}
+            <AssignAgentModal
+                isOpen={isAssignModalOpen}
+                onClose={() => setIsAssignModalOpen(false)}
+                conversation={selectedConversation}
+            />
 
             {/* Stats Cards */}
             <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
