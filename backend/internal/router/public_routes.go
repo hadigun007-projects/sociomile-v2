@@ -20,10 +20,10 @@ func (r *Router) setupPublicRoutes(router *gin.Engine) {
 	})
 
 	// auth handler
-	authRepository := repository.NewUserRepository(r.db)
-	refreshTokenRepo := repository.NewRefreshTokenRepository(r.db)
-	authService := services.NewAuthService(authRepository, r.cfg)
-	jwtService := services.NewJWTService(r.cfg.JWTSecret, 24, refreshTokenRepo) // 24 hours expiry
+	userRepository := repository.NewUserRepository(r.db)
+	refreshTokenRepository := repository.NewRefreshTokenRepository(r.db)
+	authService := services.NewAuthService(userRepository, r.cfg)
+	jwtService := services.NewJWTService(r.cfg.JWTSecret, 24, refreshTokenRepository, userRepository)
 	authHandler := handler.NewAuthHandler(authService, jwtService)
 
 	// auth routes

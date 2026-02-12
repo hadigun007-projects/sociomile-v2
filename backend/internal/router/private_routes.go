@@ -23,14 +23,15 @@ func (r *Router) setupPrivateRoutes(router *gin.Engine) {
 	userService := services.NewUserService(userRepository, r.cfg)
 	userHandler := handler.NewUserHandler(userService)
 
-	// get tenants
-	privateRoute.GET("/tenants", tenantHandler.GetTenants)
-	// create tenant
-	privateRoute.POST("/tenants", tenantHandler.CreateTenant)
-	// update tenant
-	privateRoute.PUT("/tenants/:id", tenantHandler.UpdateTenant)
-	// delete tenant
-	privateRoute.DELETE("/tenants/:id", tenantHandler.DeleteTenant)
+	// tenants routes (owner only)
+	tenantRoutes := privateRoute.Group("/tenants")
+	tenantRoutes.Use(middleware.RBACMiddleware("owner"))
+	{
+		tenantRoutes.GET("", tenantHandler.GetTenants)
+		tenantRoutes.POST("", tenantHandler.CreateTenant)
+		tenantRoutes.PUT("/:id", tenantHandler.UpdateTenant)
+		tenantRoutes.DELETE("/:id", tenantHandler.DeleteTenant)
+	}
 	// get users
 	privateRoute.GET("/users", userHandler.GetUsers)
 	// update user

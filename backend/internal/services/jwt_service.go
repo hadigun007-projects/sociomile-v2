@@ -13,7 +13,7 @@ import (
 )
 
 type JWTService interface {
-	GenerateToken(userID string, email string) (string, error)
+	GenerateToken(userID, email, role string) (string, error)
 	GenerateRefreshToken(userID string) (string, error)
 }
 
@@ -21,23 +21,27 @@ type jwtService struct {
 	secret           string
 	expiryHours      int
 	refreshTokenRepo repository.RefreshTokenRepository
+	userRepo         repository.UserRepository
 }
 
-func NewJWTService(secret string, expiryHours int, refreshTokenRepo repository.RefreshTokenRepository) JWTService {
+func NewJWTService(secret string, expiryHours int, refreshTokenRepo repository.RefreshTokenRepository, userRepo repository.UserRepository) JWTService {
 	return &jwtService{
 		secret:           secret,
 		expiryHours:      expiryHours,
 		refreshTokenRepo: refreshTokenRepo,
+		userRepo:         userRepo,
 	}
 }
 
-func (s *jwtService) GenerateToken(userID string, email string) (string, error) {
-	claims := middleware.JWTClaims{
+func (s *jwtService) GenerateToken(userID, email, role string) (string, error) {
+	claims := &middleware.JWTClaims{
 		UserID: userID,
 		Email:  email,
+		Role:   role,
 		RegisteredClaims: jwt.RegisteredClaims{
-			ExpiresAt: jwt.NewNumericDate(time.Now().Add(time.Hour * time.Duration(s.expiryHours))),
+			ExpiresAt: jwt.NewNumericDate(time.Now().Add(time.Hour * 24)),
 			IssuedAt:  jwt.NewNumericDate(time.Now()),
+			NotBefore: jwt.NewNumericDate(time.Now()),
 		},
 	}
 
@@ -93,7 +97,12 @@ func (s *jwtService) RefreshAccessToken(refreshToken string) (string, string, er
 		return "", "", fmt.Errorf("invalid refresh token")
 	}
 
-	accessToken, err := s.GenerateToken(storedToken.UserID, "")
+	user, err := s.userRepo.FindByID(storedToken.UserID)
+	if err != nil {
+		return "", "", fmt.Errorf("failed to find user: %w", err)
+	}
+
+	accessToken, err := s.GenerateToken(storedToken.UserID, user.Email, user.Role)
 	if err != nil {
 		return "", "", err
 	}

@@ -10,7 +10,7 @@ type User struct {
 	TenantID string `gorm:"type:varchar(36);not null;index" json:"tenant_id"`
 	Email    string `gorm:"type:varchar(255);uniqueIndex;not null" json:"email"`
 	Password string `gorm:"type:varchar(255);not null" json:"-"`
-	Role     string `gorm:"type:enum('admin', 'agent');not null" json:"role"`
+	Role     string `gorm:"type:enum('owner', 'admin', 'agent');not null" json:"role"`
 	Base
 }
 

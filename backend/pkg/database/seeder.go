@@ -10,36 +10,85 @@ import (
 )
 
 func SeedData(db *gorm.DB, cfg *config.Config) {
-	tenant := entity.Tenant{
-		Name: "Sociomile Enterprise",
-	}
-	if err := db.Where("name = ?", tenant.Name).FirstOrCreate(&tenant).Error; err != nil {
-		log.Printf("Failed to seed tenant: %v", err)
-	}
-
+	// Common password
 	hashedPassword, _ := bcrypt.GenerateFromPassword([]byte("password123"), bcrypt.DefaultCost)
 
-	admin := entity.User{
-		TenantID: tenant.ID,
-		Email:    cfg.AdminEmail,
+	// 1. Create Tenant Alpha
+	tenantAlpha := entity.Tenant{
+		Name: "Tenant Alpha",
+		Plan: "enterprise",
+	}
+	if err := db.Where("name = ?", tenantAlpha.Name).FirstOrCreate(&tenantAlpha).Error; err != nil {
+		log.Printf("Failed to seed Tenant Alpha: %v", err)
+	}
+
+	// 2. Create Tenant Beta
+	tenantBeta := entity.Tenant{
+		Name: "Tenant Beta",
+		Plan: "basic",
+	}
+	if err := db.Where("name = ?", tenantBeta.Name).FirstOrCreate(&tenantBeta).Error; err != nil {
+		log.Printf("Failed to seed Tenant Beta: %v", err)
+	}
+
+	// 3. Create Owner (Assign to Tenant Alpha for now, or could be a system tenant)
+	owner := entity.User{
+		TenantID: tenantAlpha.ID,
+		Email:    cfg.OwnerEmail,
+		Role:     "owner",
+	}
+	if err := db.Where("email = ?", owner.Email).Attrs(entity.User{Password: string(hashedPassword)}).FirstOrCreate(&owner).Error; err != nil {
+		log.Printf("Failed to seed owner: %v", err)
+	}
+
+	// 4. Create Users for Tenant Alpha
+	adminAlpha := entity.User{
+		TenantID: tenantAlpha.ID,
+		Email:    cfg.AdminAlphaEmail,
 		Role:     "admin",
 	}
-	if err := db.Where("email = ?", admin.Email).Attrs(entity.User{Password: string(hashedPassword)}).FirstOrCreate(&admin).Error; err != nil {
-		log.Printf("Failed to seed admin: %v", err)
+	if err := db.Where("email = ?", adminAlpha.Email).Attrs(entity.User{Password: string(hashedPassword)}).FirstOrCreate(&adminAlpha).Error; err != nil {
+		log.Printf("Failed to seed admin alpha: %v", err)
 	}
 
-	hashedAgentPassword, _ := bcrypt.GenerateFromPassword([]byte(cfg.AgentPassword), bcrypt.DefaultCost)
-
-	agent := entity.User{
-		TenantID: tenant.ID,
-		Email:    cfg.AgentEmail,
+	agentAlpha := entity.User{
+		TenantID: tenantAlpha.ID,
+		Email:    cfg.AgentAlphaEmail,
 		Role:     "agent",
 	}
-	if err := db.Where("email = ?", agent.Email).Attrs(entity.User{Password: string(hashedAgentPassword)}).FirstOrCreate(&agent).Error; err != nil {
-		log.Printf("Failed to seed agent: %v", err)
+	if err := db.Where("email = ?", agentAlpha.Email).Attrs(entity.User{Password: string(hashedPassword)}).FirstOrCreate(&agentAlpha).Error; err != nil {
+		log.Printf("Failed to seed agent alpha: %v", err)
+	}
+
+	// 5. Create Users for Tenant Beta
+	adminBeta := entity.User{
+		TenantID: tenantBeta.ID,
+		Email:    cfg.AdminBetaEmail,
+		Role:     "admin",
+	}
+	if err := db.Where("email = ?", adminBeta.Email).Attrs(entity.User{Password: string(hashedPassword)}).FirstOrCreate(&adminBeta).Error; err != nil {
+		log.Printf("Failed to seed admin beta: %v", err)
+	}
+
+	agentBeta := entity.User{
+		TenantID: tenantBeta.ID,
+		Email:    cfg.AgentBetaEmail,
+		Role:     "agent",
+	}
+	if err := db.Where("email = ?", agentBeta.Email).Attrs(entity.User{Password: string(hashedPassword)}).FirstOrCreate(&agentBeta).Error; err != nil {
+		log.Printf("Failed to seed agent beta: %v", err)
 	}
 
 	log.Println("Seeding completed!")
-	log.Printf("Login Admin: %s | %s", cfg.AdminEmail, cfg.AdminPassword)
-	log.Printf("Login Agent: %s | %s", cfg.AgentEmail, cfg.AgentPassword)
+	log.Println("---------------------------------------------------")
+	log.Printf("Login Owner:      %s       | %s", cfg.OwnerEmail, cfg.OwnerPassword)
+	log.Println("---------------------------------------------------")
+	log.Println("Tenant Alpha (Enterprise):")
+	log.Printf("  Admin:          %s | %s", cfg.AdminAlphaEmail, cfg.AdminAlphaPassword)
+	log.Printf("  Agent:          %s | %s", cfg.AgentAlphaEmail, cfg.AgentAlphaPassword)
+	log.Println("---------------------------------------------------")
+	log.Println("Tenant Beta (Basic):")
+	log.Printf("  Admin:          %s  | %s", cfg.AdminBetaEmail, cfg.AdminBetaPassword)
+	log.Printf("  Agent:          %s  | %s", cfg.AgentBetaEmail, cfg.AgentBetaPassword)
+	log.Println("---------------------------------------------------")
 }
