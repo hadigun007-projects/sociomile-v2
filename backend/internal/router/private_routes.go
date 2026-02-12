@@ -19,6 +19,18 @@ func (r *Router) setupPrivateRoutes(router *gin.Engine) {
 	tenantService := services.NewTenantService(tenantRepository, r.cfg)
 	tenantHandler := handler.NewTenantHandler(tenantService)
 
+	userRepository := repository.NewUserRepository(r.db)
+	userService := services.NewUserService(userRepository, r.cfg)
+	userHandler := handler.NewUserHandler(userService)
+
 	// get tenants
 	privateRoute.GET("/tenants", tenantHandler.GetTenants)
+	// get users
+	privateRoute.GET("/users", userHandler.GetUsers)
+	// update user
+	privateRoute.PUT("/users/:id", userHandler.UpdateUser)
+	// delete user
+	privateRoute.DELETE("/users/:id", userHandler.DeleteUser)
+	// create user
+	privateRoute.POST("/users", userHandler.CreateUser)
 }

@@ -4,7 +4,7 @@ import { useMutation } from '@tanstack/react-query';
 import { FaFacebook, FaGoogle } from 'react-icons/fa';
 import api from '../api/axios';
 import { Button } from '../components/Button';
-import { Input } from '../components/Input';
+import Input from '../components/Input';
 import { Card } from '../components/Card';
 
 const Login = () => {
@@ -34,14 +34,6 @@ const Login = () => {
         e.preventDefault();
         setErrorMsg('');
         loginMutation.mutate({ email, password });
-    };
-
-    const handleGoogleClick = () => {
-        console.log("Google login clicked (UI only)");
-    };
-
-    const handleFacebookClick = () => {
-        console.log("Facebook login clicked (UI only)");
     };
 
     return (
