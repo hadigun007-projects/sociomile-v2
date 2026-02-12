@@ -1,0 +1,85 @@
+package router
+
+import (
+	"github.com/cinnamorollofficials/sociomile-v2/backend/internal/handler"
+	"github.com/cinnamorollofficials/sociomile-v2/backend/internal/middleware"
+	"github.com/cinnamorollofficials/sociomile-v2/backend/internal/repository"
+	"github.com/cinnamorollofficials/sociomile-v2/backend/internal/services"
+	"github.com/gin-gonic/gin"
+)
+
+func (r *Router) setupPrivateRoutes(router *gin.Engine) {
+
+	// private route middleware
+	privateRoute := router.Group("/")
+	privateRoute.Use(middleware.APIKeyMiddleware(r.cfg.APIKey))
+	privateRoute.Use(middleware.JWTAuth(r.cfg.JWTSecret))
+
+	// handler
+	userRepository := repository.NewUserRepository(r.db)
+	userService := services.NewUserService(userRepository, r.cfg)
+	userHandler := handler.NewUserHandler(userService)
+
+	tenantRepository := repository.NewTenantRepository(r.db)
+	tenantService := services.NewTenantService(tenantRepository, userRepository, r.cfg)
+	tenantHandler := handler.NewTenantHandler(tenantService)
+
+	// tenants routes (owner only)
+	tenantRoutes := privateRoute.Group("/tenants")
+	tenantRoutes.Use(middleware.RBACMiddleware("owner"))
+	{
+		tenantRoutes.GET("", tenantHandler.GetTenants)
+		tenantRoutes.POST("", tenantHandler.CreateTenant)
+		tenantRoutes.PUT("/:id", tenantHandler.UpdateTenant)
+		tenantRoutes.DELETE("/:id", tenantHandler.DeleteTenant)
+	}
+	// User Routes (Admin only)
+	userRoutes := privateRoute.Group("/users")
+	userRoutes.Use(middleware.RBACMiddleware("admin"))
+	{
+		userRoutes.GET("", userHandler.GetUsers)
+		userRoutes.POST("", userHandler.CreateUser)
+		userRoutes.PUT("/:id", userHandler.UpdateUser)
+		userRoutes.DELETE("/:id", userHandler.DeleteUser)
+	}
+
+	// Conversation Routes (Admin, Agent)
+	conversationRepository := repository.NewConversationRepository(r.db)
+	messageRepository := repository.NewMessageRepository(r.db)
+	ticketRepository := repository.NewTicketRepository(r.db)
+	conversationService := services.NewConversationService(conversationRepository, messageRepository, ticketRepository)
+	conversationHandler := handler.NewConversationHandler(conversationService)
+
+	conversationRoutes := privateRoute.Group("/conversations")
+	conversationRoutes.Use(middleware.RBACMiddleware("admin", "agent"))
+	{
+		conversationRoutes.GET("", conversationHandler.GetConversations)
+		conversationRoutes.GET("/:id", conversationHandler.GetConversationByID)
+		conversationRoutes.PUT("/:id/assign", conversationHandler.AssignAgent)
+		conversationRoutes.POST("/:id/reply", conversationHandler.ReplyToConversation)
+		conversationRoutes.POST("/:id/escalate", conversationHandler.Escalate)
+	}
+
+	// Customer Routes (Admin, Agent)
+	customerRepository := repository.NewCustomerRepository(r.db)
+	customerService := services.NewCustomerService(customerRepository)
+	customerHandler := handler.NewCustomerHandler(customerService)
+
+	customerRoutes := privateRoute.Group("/customers")
+	customerRoutes.Use(middleware.RBACMiddleware("admin", "agent"))
+	{
+		customerRoutes.GET("", customerHandler.GetCustomers)
+	}
+
+	// Ticket Routes (Admin, Agent)
+	// ticketRepository is already initialized above
+	ticketService := services.NewTicketService(ticketRepository)
+	ticketHandler := handler.NewTicketHandler(ticketService)
+
+	ticketRoutes := privateRoute.Group("/tickets")
+	ticketRoutes.Use(middleware.RBACMiddleware("admin", "agent"))
+	{
+		ticketRoutes.GET("", ticketHandler.GetTickets)
+		ticketRoutes.PUT("/:id/status", ticketHandler.UpdateStatus)
+	}
+}

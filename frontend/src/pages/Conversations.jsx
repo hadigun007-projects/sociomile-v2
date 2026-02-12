@@ -1,0 +1,169 @@
+import { useState } from 'react';
+import { useQuery } from '@tanstack/react-query';
+import api from '../api/axios';
+import { DataTable } from '../components/DataTable';
+import { Card } from '../components/Card';
+import AssignAgentModal from '../components/AssignAgentModal';
+import ViewConversationModal from '../components/ViewConversationModal';
+import AgentChatModal from '../components/AgentChatModal';
+
+const Conversations = () => {
+    const [selectedConversation, setSelectedConversation] = useState(null);
+    const [isAssignModalOpen, setIsAssignModalOpen] = useState(false);
+    const [isViewModalOpen, setIsViewModalOpen] = useState(false);
+    const [page, setPage] = useState(1);
+    const limit = 10;
+
+    const currentUser = JSON.parse(localStorage.getItem('user') || '{}');
+    const isAgent = currentUser.role === 'agent';
+    const { data, isLoading } = useQuery({
+        queryKey: ['conversations', page, limit],
+        queryFn: async () => {
+            const response = await api.get(`/conversations?page=${page}&limit=${limit}`);
+            return response.data;
+        },
+        keepPreviousData: true,
+    });
+
+    const conversations = data?.data || [];
+    const meta = data?.meta || { total_pages: 1 };
+
+    const columns = [
+        { key: 'id', label: 'ID' },
+        { key: 'customer_id', label: 'Customer ID' },
+        { key: 'status', label: 'Status' },
+        {
+            key: 'assigned_agent_id',
+            label: 'Assigned Agent',
+            render: (value, row) => {
+                if (row.assigned_agent) {
+                    return row.assigned_agent.email;
+                }
+                return <span className="text-gray-400 italic">Unassigned</span>;
+            }
+        },
+        { key: 'created_at', label: 'Created At' },
+    ];
+
+    const handleAssign = (conversation) => {
+        setSelectedConversation(conversation);
+        setIsAssignModalOpen(true);
+    };
+
+    const handleView = (conversation) => {
+        setSelectedConversation(conversation);
+        setIsViewModalOpen(true);
+    };
+
+    if (isLoading) {
+        return (
+            <div className="flex items-center justify-center h-64">
+                <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-purple-600"></div>
+            </div>
+        );
+    }
+
+    return (
+        <div className="space-y-6">
+            <div className="flex items-center justify-between">
+                <div>
+                    <h1 className="text-3xl font-bold text-gray-800">Conversations</h1>
+                    <p className="text-gray-600 mt-1">
+                        Manage customer conversations and messages
+                    </p>
+                </div>
+                <div className="flex gap-2">
+                    <select className="px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500">
+                        <option value="">All Status</option>
+                        <option value="open">Open</option>
+                        <option value="assigned">Assigned</option>
+                        <option value="closed">Closed</option>
+                    </select>
+                </div>
+            </div>
+
+            <Card>
+                <DataTable
+                    columns={columns}
+                    data={conversations}
+                    emptyMessage="No conversations found"
+                    currentPage={page}
+                    totalPages={meta.total_pages}
+                    onPageChange={setPage}
+                    actions={(row) => (
+                        <div className="flex gap-2">
+                            {!isAgent && !row.assigned_agent_id && (
+                                <button
+                                    onClick={() => handleAssign(row)}
+                                    className="text-purple-600 hover:text-purple-700 font-medium text-sm"
+                                >
+                                    Assign
+                                </button>
+                            )}
+                            <button
+                                onClick={() => handleView(row)}
+                                className="text-blue-600 hover:text-blue-700 font-medium text-sm"
+                            >
+                                View
+                            </button>
+                        </div>
+                    )}
+                />
+            </Card>
+
+            {/* Assign Agent Modal (Admin only) */}
+            {!isAgent && (
+                <AssignAgentModal
+                    isOpen={isAssignModalOpen}
+                    onClose={() => setIsAssignModalOpen(false)}
+                    conversation={selectedConversation}
+                />
+            )}
+
+            {/* View Conversation Modal - Different for Admin vs Agent */}
+            {isAgent ? (
+                <AgentChatModal
+                    isOpen={isViewModalOpen}
+                    onClose={() => setIsViewModalOpen(false)}
+                    conversation={selectedConversation}
+                />
+            ) : (
+                <ViewConversationModal
+                    isOpen={isViewModalOpen}
+                    onClose={() => setIsViewModalOpen(false)}
+                    conversation={selectedConversation}
+                />
+            )}
+
+            {/* Stats Cards */}
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+                <Card className="bg-green-50">
+                    <div className="text-sm text-green-600 font-medium">Open</div>
+                    <div className="text-2xl font-bold text-green-700 mt-1">
+                        {conversations.filter((c) => c.status === 'open').length}
+                    </div>
+                </Card>
+                <Card className="bg-blue-50">
+                    <div className="text-sm text-blue-600 font-medium">Assigned</div>
+                    <div className="text-2xl font-bold text-blue-700 mt-1">
+                        {conversations.filter((c) => c.status === 'assigned').length}
+                    </div>
+                </Card>
+                <Card className="bg-gray-50">
+                    <div className="text-sm text-gray-600 font-medium">Closed</div>
+                    <div className="text-2xl font-bold text-gray-700 mt-1">
+                        {conversations.filter((c) => c.status === 'closed').length}
+                    </div>
+                </Card>
+                <Card className="bg-purple-50">
+                    <div className="text-sm text-purple-600 font-medium">Total</div>
+                    <div className="text-2xl font-bold text-purple-700 mt-1">
+                        {conversations.length}
+                    </div>
+                </Card>
+            </div>
+        </div>
+    );
+};
+
+export default Conversations;

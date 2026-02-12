@@ -1,0 +1,63 @@
+package config
+
+import (
+	"log"
+
+	"github.com/spf13/viper"
+)
+
+type Config struct {
+	ServerPort         string `mapstructure:"SERVER_PORT"`
+	DBHost             string `mapstructure:"DB_HOST"`
+	DBPort             string `mapstructure:"DB_PORT"`
+	DBUser             string `mapstructure:"DB_USER"`
+	DBPassword         string `mapstructure:"DB_PASSWORD"`
+	DBName             string `mapstructure:"DB_NAME"`
+	JWTSecret          string `mapstructure:"JWT_SECRET"`
+	OwnerEmail         string `mapstructure:"OWNER_EMAIL"`
+	OwnerPassword      string `mapstructure:"OWNER_PASSWORD"`
+	AdminAlphaEmail    string `mapstructure:"ADMIN_ALPHA_EMAIL"`
+	AdminAlphaPassword string `mapstructure:"ADMIN_ALPHA_PASSWORD"`
+	AgentAlphaEmail    string `mapstructure:"AGENT_ALPHA_EMAIL"`
+	AgentAlphaPassword string `mapstructure:"AGENT_ALPHA_PASSWORD"`
+	AdminBetaEmail     string `mapstructure:"ADMIN_BETA_EMAIL"`
+	AdminBetaPassword  string `mapstructure:"ADMIN_BETA_PASSWORD"`
+	AgentBetaEmail     string `mapstructure:"AGENT_BETA_EMAIL"`
+	AgentBetaPassword  string `mapstructure:"AGENT_BETA_PASSWORD"`
+	AllowedOrigins     string `mapstructure:"ALLOWED_ORIGINS"`
+	AllowCredentials   bool   `mapstructure:"ALLOW_CREDENTIALS"`
+	AllowedMethods     string `mapstructure:"ALLOWED_METHODS"`
+	AllowedHeaders     string `mapstructure:"ALLOWED_HEADERS"`
+	ExposeHeaders      string `mapstructure:"EXPOSE_HEADERS"`
+	MaxAge             int    `mapstructure:"MAX_AGE"`
+	APIKey             string `mapstructure:"API_KEY"`
+}
+
+func LoadConfig() (config Config) {
+	viper.AddConfigPath(".")
+	viper.SetConfigFile(".env")
+
+	viper.AutomaticEnv()
+
+	// Explicitly bind each environment variable to handle cases where .env is missing (e.g. Docker)
+	envVars := []string{
+		"SERVER_PORT", "DB_HOST", "DB_PORT", "DB_USER", "DB_PASSWORD", "DB_NAME",
+		"JWT_SECRET", "OWNER_EMAIL", "OWNER_PASSWORD", "ADMIN_ALPHA_EMAIL",
+		"ADMIN_ALPHA_PASSWORD", "AGENT_ALPHA_EMAIL", "AGENT_ALPHA_PASSWORD",
+		"ADMIN_BETA_EMAIL", "ADMIN_BETA_PASSWORD", "AGENT_BETA_EMAIL",
+		"AGENT_BETA_PASSWORD", "ALLOWED_ORIGINS", "ALLOW_CREDENTIALS",
+		"ALLOWED_METHODS", "ALLOWED_HEADERS", "EXPOSE_HEADERS", "MAX_AGE", "API_KEY",
+	}
+	for _, envVar := range envVars {
+		viper.BindEnv(envVar)
+	}
+
+	if err := viper.ReadInConfig(); err != nil {
+		log.Printf("Warning: .env file not found, using system environment variables")
+	}
+
+	if err := viper.Unmarshal(&config); err != nil {
+		log.Fatal("Error mapping config: ", err)
+	}
+	return
+}
