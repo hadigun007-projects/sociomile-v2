@@ -16,8 +16,9 @@ func NewChannelHandler(channelService services.ChannelService) *ChannelHandler {
 }
 
 type WebhookPayload struct {
-	TenantID           string `json:"tenant_id" binding:"required"`
-	CustomerExternalID string `json:"customer_external_id" binding:"required"`
+	TenantID           string `json:"tenant_id"`
+	CustomerExternalID string `json:"customer_external_id"`
+	ConversationID     string `json:"conversation_id"`
 	Message            string `json:"message" binding:"required"`
 }
 
@@ -28,16 +29,37 @@ func (h *ChannelHandler) HandleWebhook(c *gin.Context) {
 		return
 	}
 
-	if err := h.channelService.HandleWebhook(payload.TenantID, payload.CustomerExternalID, payload.Message); err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
-		return
+	// Validate based on mode
+	if payload.ConversationID != "" {
+		// Mode 1: Sending to existing conversation (only conversation_id needed)
+		if err := h.channelService.HandleWebhook(payload.TenantID, payload.CustomerExternalID, payload.ConversationID, payload.Message); err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+			return
+		}
+	} else {
+		// Mode 2: Creating new conversation (need tenant_id and customer_external_id)
+		if payload.TenantID == "" || payload.CustomerExternalID == "" {
+			c.JSON(http.StatusBadRequest, gin.H{"error": "tenant_id and customer_external_id are required when conversation_id is not provided"})
+			return
+		}
+
+		if err := h.channelService.HandleWebhook(payload.TenantID, payload.CustomerExternalID, payload.ConversationID, payload.Message); err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+			return
+		}
 	}
 
-	c.JSON(http.StatusOK, gin.H{
+	response := gin.H{
 		"message": "Message received successfully",
-		"data": gin.H{
-			"tenant_id":            payload.TenantID,
-			"customer_external_id": payload.CustomerExternalID,
-		},
-	})
+		"data":    gin.H{},
+	}
+
+	if payload.CustomerExternalID != "" {
+		response["data"].(gin.H)["customer_external_id"] = payload.CustomerExternalID
+	}
+	if payload.ConversationID != "" {
+		response["data"].(gin.H)["conversation_id"] = payload.ConversationID
+	}
+
+	c.JSON(http.StatusOK, response)
 }

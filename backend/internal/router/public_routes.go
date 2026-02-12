@@ -50,4 +50,10 @@ func (r *Router) setupPublicRoutes(router *gin.Engine) {
 	tenantHandler := handler.NewTenantHandler(tenantService)
 
 	router.GET("/tenants/public", tenantHandler.GetPublicTenants)
+
+	// public conversation endpoint (for simulator)
+	conversationService := services.NewConversationService(conversationRepository, messageRepository)
+	conversationHandler := handler.NewConversationHandler(conversationService)
+
+	router.GET("/conversations/:id/public", conversationHandler.GetConversationByIDPublic)
 }

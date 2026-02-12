@@ -48,9 +48,14 @@ func (r *conversationRepository) GetByTenantID(tenantID string) ([]entity.Conver
 
 func (r *conversationRepository) FindByID(id, tenantID string) (*entity.Conversation, error) {
 	var conversation entity.Conversation
-	if err := r.db.Where("id = ? AND tenant_id = ?", id, tenantID).
-		Preload("Messages").
-		First(&conversation).Error; err != nil {
+	query := r.db.Where("id = ?", id)
+
+	// Only filter by tenant_id if it's provided
+	if tenantID != "" {
+		query = query.Where("tenant_id = ?", tenantID)
+	}
+
+	if err := query.Preload("Messages").First(&conversation).Error; err != nil {
 		return nil, err
 	}
 	return &conversation, nil

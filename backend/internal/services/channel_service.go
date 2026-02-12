@@ -2,6 +2,7 @@ package services
 
 import (
 	"errors"
+	"fmt"
 
 	"github.com/cinnamorollofficials/sociomile-v2/backend/internal/entity"
 	"github.com/cinnamorollofficials/sociomile-v2/backend/internal/repository"
@@ -9,7 +10,7 @@ import (
 )
 
 type ChannelService interface {
-	HandleWebhook(tenantID, customerExternalID, message string) error
+	HandleWebhook(tenantID, customerExternalID, conversationID, message string) error
 }
 
 type channelService struct {
@@ -30,46 +31,62 @@ func NewChannelService(
 	}
 }
 
-func (s *channelService) HandleWebhook(tenantID, customerExternalID, message string) error {
-	// 1. Find or create customer
-	customer, err := s.customerRepo.FindByExternalID(tenantID, customerExternalID)
-	if err != nil {
-		if errors.Is(err, gorm.ErrRecordNotFound) {
-			// Create new customer
-			customer = &entity.Customer{
-				TenantID:   tenantID,
-				ExternalID: customerExternalID,
-				Name:       customerExternalID, // Use external ID as name initially
+func (s *channelService) HandleWebhook(tenantID, customerExternalID, conversationID, message string) error {
+	var targetConversation *entity.Conversation
+	var err error
+
+	// Mode 1: Direct to existing conversation
+	if conversationID != "" {
+		// When conversation_id is provided, we can get tenant_id from the conversation itself
+		targetConversation, err = s.conversationRepo.FindByID(conversationID, tenantID)
+		if err != nil {
+			if errors.Is(err, gorm.ErrRecordNotFound) {
+				return fmt.Errorf("conversation not found")
 			}
-			if err := s.customerRepo.Create(customer); err != nil {
-				return err
-			}
-		} else {
 			return err
 		}
-	}
-
-	// 2. Find or create conversation
-	conversation, err := s.conversationRepo.FindByCustomerID(tenantID, customer.ID)
-	if err != nil {
-		if errors.Is(err, gorm.ErrRecordNotFound) {
-			// Create new conversation
-			conversation = &entity.Conversation{
-				TenantID:   tenantID,
-				CustomerID: customer.ID,
-				Status:     "open",
-			}
-			if err := s.conversationRepo.Create(conversation); err != nil {
+	} else {
+		// Mode 2: Find or create customer, then find or create conversation
+		// 1. Find or create customer
+		customer, err := s.customerRepo.FindByExternalID(tenantID, customerExternalID)
+		if err != nil {
+			if errors.Is(err, gorm.ErrRecordNotFound) {
+				// Create new customer
+				customer = &entity.Customer{
+					TenantID:   tenantID,
+					ExternalID: customerExternalID,
+					Name:       customerExternalID, // Use external ID as name initially
+				}
+				if err := s.customerRepo.Create(customer); err != nil {
+					return err
+				}
+			} else {
 				return err
 			}
-		} else {
-			return err
+		}
+
+		// 2. Find or create conversation
+		targetConversation, err = s.conversationRepo.FindByCustomerID(tenantID, customer.ID)
+		if err != nil {
+			if errors.Is(err, gorm.ErrRecordNotFound) {
+				// Create new conversation
+				targetConversation = &entity.Conversation{
+					TenantID:   tenantID,
+					CustomerID: customer.ID,
+					Status:     "open",
+				}
+				if err := s.conversationRepo.Create(targetConversation); err != nil {
+					return err
+				}
+			} else {
+				return err
+			}
 		}
 	}
 
 	// 3. Create message
 	newMessage := &entity.Message{
-		ConversationID: conversation.ID,
+		ConversationID: targetConversation.ID,
 		SenderType:     "customer",
 		Message:        message,
 	}

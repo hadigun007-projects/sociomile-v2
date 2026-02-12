@@ -100,3 +100,15 @@ func (h *ConversationHandler) ReplyToConversation(c *gin.Context) {
 
 	c.JSON(http.StatusOK, gin.H{"message": "Reply sent successfully"})
 }
+
+func (h *ConversationHandler) GetConversationByIDPublic(c *gin.Context) {
+	id := c.Param("id")
+
+	conversation, err := h.conversationService.GetConversationByID(id, "")
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{"data": conversation})
+}
