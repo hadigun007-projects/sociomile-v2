@@ -30,7 +30,13 @@ func RBACMiddleware(allowedRoles ...string) gin.HandlerFunc {
 			}
 		}
 
-		c.JSON(http.StatusForbidden, gin.H{"error": "Access denied: insufficient permissions"})
+		c.JSON(http.StatusForbidden, gin.H{
+			"error": "Access denied: insufficient permissions",
+			"debug": map[string]interface{}{
+				"user_role":     roleStr,
+				"allowed_roles": allowedRoles,
+			},
+		})
 		c.Abort()
 	}
 }

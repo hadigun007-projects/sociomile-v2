@@ -13,6 +13,7 @@ func (r *Router) setupPrivateRoutes(router *gin.Engine) {
 	// private route middleware
 	privateRoute := router.Group("/")
 	privateRoute.Use(middleware.APIKeyMiddleware(r.cfg.APIKey))
+	privateRoute.Use(middleware.JWTAuth(r.cfg.JWTSecret))
 
 	// handler
 	tenantRepository := repository.NewTenantRepository(r.db)

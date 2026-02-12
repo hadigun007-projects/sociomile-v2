@@ -24,13 +24,15 @@ const SidebarItem = ({ icon: Icon, label, to }) => {
 
 export const Sidebar = ({ isSidebarOpen, user, handleLogout }) => {
     const menuItems = [
-        { icon: FaChartPie, label: 'Dashboard', to: '/dashboard' },
-        { icon: FaUsers, label: 'Users', to: '/dashboard/users' },
-        { icon: FaComments, label: 'Conversations', to: '/dashboard/conversations' },
-        { icon: FaBuilding, label: 'Tenants', to: '/dashboard/tenants' },
-        { icon: FaTicketAlt, label: 'Tickets', to: '/dashboard/tickets' },
-        { icon: FaUserFriends, label: 'Customers', to: '/dashboard/customers' },
+        { icon: FaChartPie, label: 'Dashboard', to: '/dashboard', roles: ['admin', 'agent', 'owner'] },
+        { icon: FaUsers, label: 'Users', to: '/dashboard/users', roles: ['admin'] }, // Owner only manages tenants, Admin manages users
+        { icon: FaComments, label: 'Conversations', to: '/dashboard/conversations', roles: ['agent', 'admin'] },
+        { icon: FaBuilding, label: 'Tenants', to: '/dashboard/tenants', roles: ['owner'] },
+        { icon: FaTicketAlt, label: 'Tickets', to: '/dashboard/tickets', roles: ['admin', 'agent'] },
+        { icon: FaUserFriends, label: 'Customers', to: '/dashboard/customers', roles: ['admin', 'agent'] },
     ];
+
+    const filteredMenuItems = menuItems.filter(item => item.roles.includes(user.role));
 
     return (
         <aside
@@ -46,7 +48,7 @@ export const Sidebar = ({ isSidebarOpen, user, handleLogout }) => {
                     <div className="px-6 pb-2">
                         <p className="text-xs font-bold text-gray-400 uppercase tracking-wider">Main Menu</p>
                     </div>
-                    {menuItems.map((item) => (
+                    {filteredMenuItems.map((item) => (
                         <SidebarItem
                             key={item.label}
                             icon={item.icon}
