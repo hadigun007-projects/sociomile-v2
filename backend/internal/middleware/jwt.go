@@ -47,7 +47,6 @@ func JWTAuth(jwtSecret string) gin.HandlerFunc {
 		if claims, ok := token.Claims.(*JWTClaims); ok {
 			c.Set("user_id", claims.UserID)
 			c.Set("user_email", claims.Email)
-			c.Set("user_email", claims.Email)
 			c.Set("user_role", claims.Role)
 			c.Set("user_tenant_id", claims.TenantID)
 		} else {

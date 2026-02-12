@@ -83,7 +83,14 @@ func (h *UserHandler) CreateUser(c *gin.Context) {
 		c.JSON(http.StatusUnauthorized, gin.H{"error": "Tenant ID not found in context"})
 		return
 	}
-	user.TenantID = tenantID.(string)
+
+	tenantIDStr := tenantID.(string)
+	if tenantIDStr == "" {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "Invalid token details. Please log out and log in again."})
+		return
+	}
+
+	user.TenantID = tenantIDStr
 
 	if err := h.userService.CreateUser(&user); err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
