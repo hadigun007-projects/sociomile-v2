@@ -19,13 +19,11 @@ const Login = () => {
             return response.data;
         },
         onSuccess: (data) => {
-            // Store tokens
             localStorage.setItem('token', data.access_token);
             localStorage.setItem('refreshToken', data.refresh_token);
             localStorage.setItem('user', JSON.stringify(data.user));
 
-            // Redirect to home
-            navigate('/');
+            navigate('/dashboard');
         },
         onError: (err) => {
             setErrorMsg(err.response?.data?.error || 'Login failed. Please check your credentials.');
@@ -38,7 +36,6 @@ const Login = () => {
         loginMutation.mutate({ email, password });
     };
 
-    // Mock handlers for social login UI (Visual only as requested)
     const handleGoogleClick = () => {
         console.log("Google login clicked (UI only)");
     };

@@ -10,7 +10,7 @@ import (
 
 func CORS(cfg config.Config) gin.HandlerFunc {
 	config := cors.Config{
-		AllowOrigins:     []string{cfg.AllowedOrigins},
+		AllowOrigins:     []string{"*"},
 		AllowMethods:     []string{cfg.AllowedMethods},
 		AllowHeaders:     []string{cfg.AllowedHeaders},
 		ExposeHeaders:    []string{cfg.ExposeHeaders},
