@@ -12,9 +12,9 @@ import (
 )
 
 type UserService interface {
-	GetUsers() ([]entity.User, error)
-	UpdateUser(id string, input map[string]interface{}) (*entity.User, error)
-	DeleteUser(id string) error
+	GetUsers(tenantID string) ([]entity.User, error)
+	UpdateUser(id, tenantID string, input map[string]interface{}) (*entity.User, error)
+	DeleteUser(id, tenantID string) error
 	CreateUser(user *entity.User) error
 }
 
@@ -27,12 +27,12 @@ func NewUserService(userRepo repository.UserRepository, cfg *config.Config) User
 	return &userService{userRepo: userRepo, cfg: cfg}
 }
 
-func (s *userService) GetUsers() ([]entity.User, error) {
-	return s.userRepo.GetUsers()
+func (s *userService) GetUsers(tenantID string) ([]entity.User, error) {
+	return s.userRepo.GetUsers(tenantID)
 }
 
-func (s *userService) UpdateUser(id string, input map[string]interface{}) (*entity.User, error) {
-	user, err := s.userRepo.FindByID(id)
+func (s *userService) UpdateUser(id, tenantID string, input map[string]interface{}) (*entity.User, error) {
+	user, err := s.userRepo.FindByID(id, tenantID)
 	if err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
 			return nil, fmt.Errorf("user not found")
@@ -62,8 +62,8 @@ func (s *userService) UpdateUser(id string, input map[string]interface{}) (*enti
 	return user, nil
 }
 
-func (s *userService) DeleteUser(id string) error {
-	return s.userRepo.Delete(id)
+func (s *userService) DeleteUser(id, tenantID string) error {
+	return s.userRepo.Delete(id, tenantID)
 }
 
 func (s *userService) CreateUser(user *entity.User) error {

@@ -17,7 +17,13 @@ func NewUserHandler(userService services.UserService) *UserHandler {
 }
 
 func (h *UserHandler) GetUsers(c *gin.Context) {
-	users, err := h.userService.GetUsers()
+	tenantID, exists := c.Get("user_tenant_id")
+	if !exists {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "Tenant ID not found in context"})
+		return
+	}
+
+	users, err := h.userService.GetUsers(tenantID.(string))
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
@@ -28,13 +34,19 @@ func (h *UserHandler) GetUsers(c *gin.Context) {
 
 func (h *UserHandler) UpdateUser(c *gin.Context) {
 	id := c.Param("id")
+	tenantID, exists := c.Get("user_tenant_id")
+	if !exists {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "Tenant ID not found in context"})
+		return
+	}
+
 	var input map[string]interface{}
 	if err := c.ShouldBindJSON(&input); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
 
-	user, err := h.userService.UpdateUser(id, input)
+	user, err := h.userService.UpdateUser(id, tenantID.(string), input)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
@@ -45,7 +57,13 @@ func (h *UserHandler) UpdateUser(c *gin.Context) {
 
 func (h *UserHandler) DeleteUser(c *gin.Context) {
 	id := c.Param("id")
-	if err := h.userService.DeleteUser(id); err != nil {
+	tenantID, exists := c.Get("user_tenant_id")
+	if !exists {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "Tenant ID not found in context"})
+		return
+	}
+
+	if err := h.userService.DeleteUser(id, tenantID.(string)); err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
@@ -59,6 +77,13 @@ func (h *UserHandler) CreateUser(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
+
+	tenantID, exists := c.Get("user_tenant_id")
+	if !exists {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "Tenant ID not found in context"})
+		return
+	}
+	user.TenantID = tenantID.(string)
 
 	if err := h.userService.CreateUser(&user); err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})

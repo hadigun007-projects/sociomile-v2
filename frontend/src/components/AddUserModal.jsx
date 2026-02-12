@@ -10,7 +10,6 @@ const AddUserModal = ({ isOpen, onClose }) => {
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
     const [role, setRole] = useState('agent');
-    const [tenantId, setTenantId] = useState('8300f896-70d2-4ff3-9259-76b48f1badfa'); // Default tenant ID for now
     const queryClient = useQueryClient();
 
     const createMutation = useMutation({
@@ -30,7 +29,7 @@ const AddUserModal = ({ isOpen, onClose }) => {
 
     const handleSubmit = async (e) => {
         e.preventDefault();
-        const data = { email, password, role, tenant_id: tenantId };
+        const data = { email, password, role };
         createMutation.mutate(data);
     };
 
@@ -101,22 +100,14 @@ const AddUserModal = ({ isOpen, onClose }) => {
                                                     <select
                                                         id="role"
                                                         name="role"
-                                                        className="block w-full rounded-t-lg border-b-2 border-gray-300 bg-gray-50 px-2.5 pb-2.5 pt-2.5 text-sm text-gray-900 focus:border-purple-600 focus:outline-none focus:ring-0"
+                                                        className="block w-full rounded-t-lg border-b-2 border-gray-300 bg-gray-100 px-2.5 pb-2.5 pt-2.5 text-sm text-gray-500 focus:border-purple-600 focus:outline-none focus:ring-0 cursor-not-allowed"
                                                         value={role}
-                                                        onChange={(e) => setRole(e.target.value)}
+                                                        disabled
                                                     >
-                                                        <option value="admin">Admin</option>
                                                         <option value="agent">Agent</option>
+                                                        <option value="admin">Admin</option>
                                                     </select>
                                                 </div>
-                                                <Input
-                                                    label="Tenant ID"
-                                                    type="text"
-                                                    id="tenantId"
-                                                    value={tenantId}
-                                                    onChange={(e) => setTenantId(e.target.value)}
-                                                    required
-                                                />
                                                 <div className="mt-5 sm:mt-4 sm:flex sm:flex-row-reverse">
                                                     <button
                                                         type="submit"

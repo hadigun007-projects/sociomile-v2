@@ -33,12 +33,13 @@ func (r *Router) setupPrivateRoutes(router *gin.Engine) {
 		tenantRoutes.PUT("/:id", tenantHandler.UpdateTenant)
 		tenantRoutes.DELETE("/:id", tenantHandler.DeleteTenant)
 	}
-	// get users
-	privateRoute.GET("/users", userHandler.GetUsers)
-	// update user
-	privateRoute.PUT("/users/:id", userHandler.UpdateUser)
-	// delete user
-	privateRoute.DELETE("/users/:id", userHandler.DeleteUser)
-	// create user
-	privateRoute.POST("/users", userHandler.CreateUser)
+	// User Routes (Admin only)
+	userRoutes := privateRoute.Group("/users")
+	userRoutes.Use(middleware.RBACMiddleware("admin"))
+	{
+		userRoutes.GET("", userHandler.GetUsers)
+		userRoutes.POST("", userHandler.CreateUser)
+		userRoutes.PUT("/:id", userHandler.UpdateUser)
+		userRoutes.DELETE("/:id", userHandler.DeleteUser)
+	}
 }

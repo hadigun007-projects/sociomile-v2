@@ -33,7 +33,7 @@ func (h *AuthHandler) Login(c *gin.Context) {
 		return
 	}
 
-	token, err := h.jwtService.GenerateToken(user.ID, user.Email, user.Role)
+	token, err := h.jwtService.GenerateToken(user.ID, user.Email, user.Role, user.TenantID)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to generate token"})
 		return

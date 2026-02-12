@@ -9,9 +9,10 @@ import (
 )
 
 type JWTClaims struct {
-	UserID string `json:"user_id"`
-	Email  string `json:"email"`
-	Role   string `json:"role"`
+	UserID   string `json:"user_id"`
+	Email    string `json:"email"`
+	Role     string `json:"role"`
+	TenantID string `json:"tenant_id"`
 	jwt.RegisteredClaims
 }
 
@@ -46,7 +47,9 @@ func JWTAuth(jwtSecret string) gin.HandlerFunc {
 		if claims, ok := token.Claims.(*JWTClaims); ok {
 			c.Set("user_id", claims.UserID)
 			c.Set("user_email", claims.Email)
+			c.Set("user_email", claims.Email)
 			c.Set("user_role", claims.Role)
+			c.Set("user_tenant_id", claims.TenantID)
 		} else {
 			c.JSON(http.StatusUnauthorized, gin.H{"error": "Invalid token claims"})
 			c.Abort()
