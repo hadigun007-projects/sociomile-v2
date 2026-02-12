@@ -6,9 +6,10 @@ import (
 )
 
 type Tenant struct {
-	ID    string `gorm:"type:varchar(36);primaryKey"`
-	Name  string `gorm:"type:varchar(255);not null"`
-	Users []User `gorm:"foreignKey:TenantID"`
+	ID    string `gorm:"type:varchar(36);primaryKey" json:"id"`
+	Name  string `gorm:"type:varchar(255);not null" json:"name"`
+	Plan  string `gorm:"type:varchar(50);default:'basic'" json:"plan"`
+	Users []User `gorm:"foreignKey:TenantID" json:"users,omitempty"`
 	Base
 }
 

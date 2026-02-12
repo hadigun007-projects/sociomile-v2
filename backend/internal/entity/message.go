@@ -6,11 +6,11 @@ import (
 )
 
 type Message struct {
-	ID             string `gorm:"type:varchar(36);primaryKey"`
-	ConversationID string `gorm:"type:varchar(36);not null;index"`
-	SenderType     string `gorm:"type:enum('customer', 'agent');not null"`
-	Message        string `gorm:"type:text;not null"`
-	Base
+	ID             string `gorm:"type:varchar(36);primaryKey" json:"id"`
+	ConversationID string `gorm:"type:varchar(36);not null;index" json:"conversation_id"`
+	SenderType     string `gorm:"type:enum('customer', 'agent');not null" json:"sender_type"`
+	Message        string `gorm:"type:text;not null" json:"message"`
+	Base           `json:",inline"`
 }
 
 func (b *Message) BeforeCreate(tx *gorm.DB) (err error) {

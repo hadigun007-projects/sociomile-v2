@@ -20,10 +20,10 @@ func (r *Router) setupPublicRoutes(router *gin.Engine) {
 	})
 
 	// auth handler
-	authRepository := repository.NewUserRepository(r.db)
-	refreshTokenRepo := repository.NewRefreshTokenRepository(r.db)
-	authService := services.NewAuthService(authRepository, r.cfg)
-	jwtService := services.NewJWTService(r.cfg.JWTSecret, 24, refreshTokenRepo) // 24 hours expiry
+	userRepository := repository.NewUserRepository(r.db)
+	refreshTokenRepository := repository.NewRefreshTokenRepository(r.db)
+	authService := services.NewAuthService(userRepository, r.cfg)
+	jwtService := services.NewJWTService(r.cfg.JWTSecret, 24, refreshTokenRepository, userRepository)
 	authHandler := handler.NewAuthHandler(authService, jwtService)
 
 	// auth routes
@@ -31,4 +31,30 @@ func (r *Router) setupPublicRoutes(router *gin.Engine) {
 	{
 		auth.POST("/login", authHandler.Login)
 	}
+
+	// channel webhook (simulated external source)
+	customerRepository := repository.NewCustomerRepository(r.db)
+	conversationRepository := repository.NewConversationRepository(r.db)
+	messageRepository := repository.NewMessageRepository(r.db)
+	channelService := services.NewChannelService(customerRepository, conversationRepository, messageRepository)
+	channelHandler := handler.NewChannelHandler(channelService)
+
+	channel := router.Group("/channel")
+	{
+		channel.POST("/webhook", channelHandler.HandleWebhook)
+	}
+
+	// public tenant list (for simulator dropdown)
+	tenantRepository := repository.NewTenantRepository(r.db)
+	tenantService := services.NewTenantService(tenantRepository, userRepository, r.cfg)
+	tenantHandler := handler.NewTenantHandler(tenantService)
+
+	router.GET("/tenants/public", tenantHandler.GetPublicTenants)
+
+	// public conversation endpoint (for simulator)
+	ticketRepository := repository.NewTicketRepository(r.db)
+	conversationService := services.NewConversationService(conversationRepository, messageRepository, ticketRepository)
+	conversationHandler := handler.NewConversationHandler(conversationService)
+
+	router.GET("/conversations/:id/public", conversationHandler.GetConversationByIDPublic)
 }
