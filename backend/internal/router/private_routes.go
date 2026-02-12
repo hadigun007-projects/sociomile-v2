@@ -70,4 +70,16 @@ func (r *Router) setupPrivateRoutes(router *gin.Engine) {
 	{
 		customerRoutes.GET("", customerHandler.GetCustomers)
 	}
+
+	// Ticket Routes (Admin, Agent)
+	// ticketRepository is already initialized above
+	ticketService := services.NewTicketService(ticketRepository)
+	ticketHandler := handler.NewTicketHandler(ticketService)
+
+	ticketRoutes := privateRoute.Group("/tickets")
+	ticketRoutes.Use(middleware.RBACMiddleware("admin", "agent"))
+	{
+		ticketRoutes.GET("", ticketHandler.GetTickets)
+		ticketRoutes.PUT("/:id/status", ticketHandler.UpdateStatus)
+	}
 }

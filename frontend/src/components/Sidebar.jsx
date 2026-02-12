@@ -28,7 +28,7 @@ export const Sidebar = ({ isSidebarOpen, user, handleLogout }) => {
         { icon: FaUsers, label: 'Users', to: '/dashboard/users', roles: ['admin'] }, // Owner only manages tenants, Admin manages users
         { icon: FaComments, label: 'Conversations', to: '/dashboard/conversations', roles: ['agent', 'admin'] },
         { icon: FaBuilding, label: 'Tenants', to: '/dashboard/tenants', roles: ['owner'] },
-        { icon: FaTicketAlt, label: 'Tickets', to: '/dashboard/tickets', roles: ['admin', 'agent'] },
+        { icon: FaTicketAlt, label: 'Tickets', to: '/dashboard/tickets', roles: ['admin'] },
         { icon: FaUserFriends, label: 'Customers', to: '/dashboard/customers', roles: ['admin', 'agent'] },
     ];
 
