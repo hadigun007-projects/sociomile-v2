@@ -128,3 +128,41 @@ func (h *ConversationHandler) GetConversationByIDPublic(c *gin.Context) {
 
 	c.JSON(http.StatusOK, gin.H{"data": conversation})
 }
+
+type EscalateRequest struct {
+	Title       string `json:"title" binding:"required"`
+	Description string `json:"description"`
+}
+
+func (h *ConversationHandler) Escalate(c *gin.Context) {
+	id := c.Param("id")
+	tenantID, exists := c.Get("user_tenant_id")
+	if !exists {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "Tenant ID not found in context"})
+		return
+	}
+
+	var req EscalateRequest
+	if err := h.ShouldBindRequest(c, &req); err != nil {
+		return
+	}
+
+	ticket, err := h.conversationService.EscalateToTicket(id, tenantID.(string), req.Title, req.Description)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+
+	c.JSON(http.StatusCreated, gin.H{
+		"message": "Conversation escalated to ticket successfully",
+		"data":    ticket,
+	})
+}
+
+func (h *ConversationHandler) ShouldBindRequest(c *gin.Context, req interface{}) error {
+	if err := c.ShouldBindJSON(req); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return err
+	}
+	return nil
+}

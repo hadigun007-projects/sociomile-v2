@@ -22,5 +22,7 @@ func Migrate(db *gorm.DB) {
 		log.Fatal("Failed to migrate database:", err)
 	}
 
+	db.Exec("ALTER TABLE tickets MODIFY COLUMN status ENUM('requested', 'open', 'in_progress', 'resolved', 'closed') DEFAULT 'open'")
+
 	log.Println("Database Migration Completed!")
 }

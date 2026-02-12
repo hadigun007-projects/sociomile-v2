@@ -14,20 +14,24 @@ type ConversationService interface {
 	GetConversationByID(id, tenantID string) (*entity.Conversation, error)
 	AssignAgent(conversationID, tenantID, agentID string) (*entity.Conversation, error)
 	ReplyToConversation(conversationID, tenantID, message string) error
+	EscalateToTicket(conversationID, tenantID, title, description string) (*entity.Ticket, error)
 }
 
 type conversationService struct {
 	conversationRepo repository.ConversationRepository
 	messageRepo      repository.MessageRepository
+	ticketRepo       repository.TicketRepository
 }
 
 func NewConversationService(
 	conversationRepo repository.ConversationRepository,
 	messageRepo repository.MessageRepository,
+	ticketRepo repository.TicketRepository,
 ) ConversationService {
 	return &conversationService{
 		conversationRepo: conversationRepo,
 		messageRepo:      messageRepo,
+		ticketRepo:       ticketRepo,
 	}
 }
 
@@ -76,4 +80,38 @@ func (s *conversationService) ReplyToConversation(conversationID, tenantID, mess
 	}
 
 	return s.messageRepo.Create(newMessage)
+}
+
+func (s *conversationService) EscalateToTicket(conversationID, tenantID, title, description string) (*entity.Ticket, error) {
+	// 1. Verify conversation exists and belongs to tenant
+	conversation, err := s.conversationRepo.FindByID(conversationID, tenantID)
+	if err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return nil, fmt.Errorf("conversation not found")
+		}
+		return nil, err
+	}
+
+	// 2. Check if ticket already exists for this conversation
+	// (Note: Ticket has unique constraint on ConversationID)
+
+	// 3. Create Ticket with status 'requested'
+	ticket := &entity.Ticket{
+		TenantID:       tenantID,
+		ConversationID: conversationID,
+		Title:          title,
+		Description:    description,
+		Status:         "requested",
+		Priority:       "medium",
+	}
+
+	if conversation.AssignedAgentID != nil {
+		ticket.AssignedAgentID = conversation.AssignedAgentID
+	}
+
+	if err := s.ticketRepo.Create(ticket); err != nil {
+		return nil, err
+	}
+
+	return ticket, nil
 }

@@ -7,6 +7,7 @@ import (
 
 type CustomerService interface {
 	GetCustomers(tenantID string) ([]entity.Customer, error)
+	GetCustomersWithPagination(tenantID string, page, limit int) ([]entity.Customer, int64, error)
 }
 
 type customerService struct {
@@ -19,4 +20,8 @@ func NewCustomerService(customerRepo repository.CustomerRepository) CustomerServ
 
 func (s *customerService) GetCustomers(tenantID string) ([]entity.Customer, error) {
 	return s.customerRepo.GetByTenantID(tenantID)
+}
+
+func (s *customerService) GetCustomersWithPagination(tenantID string, page, limit int) ([]entity.Customer, int64, error) {
+	return s.customerRepo.GetByTenantIDWithPagination(tenantID, page, limit)
 }

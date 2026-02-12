@@ -46,7 +46,8 @@ func (r *Router) setupPrivateRoutes(router *gin.Engine) {
 	// Conversation Routes (Admin, Agent)
 	conversationRepository := repository.NewConversationRepository(r.db)
 	messageRepository := repository.NewMessageRepository(r.db)
-	conversationService := services.NewConversationService(conversationRepository, messageRepository)
+	ticketRepository := repository.NewTicketRepository(r.db)
+	conversationService := services.NewConversationService(conversationRepository, messageRepository, ticketRepository)
 	conversationHandler := handler.NewConversationHandler(conversationService)
 
 	conversationRoutes := privateRoute.Group("/conversations")
@@ -56,6 +57,7 @@ func (r *Router) setupPrivateRoutes(router *gin.Engine) {
 		conversationRoutes.GET("/:id", conversationHandler.GetConversationByID)
 		conversationRoutes.PUT("/:id/assign", conversationHandler.AssignAgent)
 		conversationRoutes.POST("/:id/reply", conversationHandler.ReplyToConversation)
+		conversationRoutes.POST("/:id/escalate", conversationHandler.Escalate)
 	}
 
 	// Customer Routes (Admin, Agent)

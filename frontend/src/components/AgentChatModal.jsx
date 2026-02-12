@@ -52,6 +52,34 @@ const AgentChatModal = ({ isOpen, onClose, conversation: initialConversation }) 
         },
     });
 
+    const escalateMutation = useMutation({
+        mutationFn: async ({ conversationId, title, description }) => {
+            const response = await api.post(`/conversations/${conversationId}/escalate`, {
+                title,
+                description,
+            });
+            return response.data;
+        },
+        onSuccess: () => {
+            queryClient.invalidateQueries(['conversation', initialConversation?.id]);
+            queryClient.invalidateQueries(['conversations']);
+        },
+        onError: (err) => {
+            alert(`Failed to escalate: ${err.response?.data?.error || err.message}`);
+        },
+    });
+
+    const handleEscalate = () => {
+        const title = prompt('Enter a title for the ticket:', `Issue from conversation ${initialConversation.id.slice(0, 8)}`);
+        if (!title) return;
+
+        escalateMutation.mutate({
+            conversationId: initialConversation.id,
+            title,
+            description: `Escalated from conversation chat.`,
+        });
+    };
+
     const handleSubmit = (e) => {
         e.preventDefault();
         if (!message.trim()) return;
@@ -82,6 +110,19 @@ const AgentChatModal = ({ isOpen, onClose, conversation: initialConversation }) 
                                 }`}>
                                 {displayConversation.status}
                             </span>
+                            {displayConversation.ticket ? (
+                                <span className="bg-yellow-100 text-yellow-700 px-2 py-0.5 rounded-full text-xs font-medium border border-yellow-200">
+                                    Ticket: {displayConversation.ticket.status}
+                                </span>
+                            ) : (
+                                <button
+                                    onClick={handleEscalate}
+                                    disabled={escalateMutation.isPending}
+                                    className="text-xs font-bold text-purple-600 hover:text-purple-700 hover:underline disabled:opacity-50"
+                                >
+                                    {escalateMutation.isPending ? 'Escalating...' : 'Escalate to Ticket'}
+                                </button>
+                            )}
                         </div>
                     </div>
                     <button

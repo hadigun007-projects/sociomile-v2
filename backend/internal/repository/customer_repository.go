@@ -9,6 +9,7 @@ type CustomerRepository interface {
 	FindByExternalID(tenantID, externalID string) (*entity.Customer, error)
 	Create(customer *entity.Customer) error
 	GetByTenantID(tenantID string) ([]entity.Customer, error)
+	GetByTenantIDWithPagination(tenantID string, page, limit int) ([]entity.Customer, int64, error)
 }
 
 type customerRepository struct {
@@ -37,4 +38,23 @@ func (r *customerRepository) GetByTenantID(tenantID string) ([]entity.Customer, 
 		return nil, err
 	}
 	return customers, nil
+}
+
+func (r *customerRepository) GetByTenantIDWithPagination(tenantID string, page, limit int) ([]entity.Customer, int64, error) {
+	var customers []entity.Customer
+	var total int64
+
+	offset := (page - 1) * limit
+
+	query := r.db.Model(&entity.Customer{}).Where("tenant_id = ?", tenantID)
+
+	if err := query.Count(&total).Error; err != nil {
+		return nil, 0, err
+	}
+
+	if err := query.Order("created_at DESC").Offset(offset).Limit(limit).Find(&customers).Error; err != nil {
+		return nil, 0, err
+	}
+
+	return customers, total, nil
 }

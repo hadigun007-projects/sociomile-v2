@@ -40,6 +40,7 @@ func (r *conversationRepository) GetByTenantID(tenantID string) ([]entity.Conver
 	if err := r.db.Where("tenant_id = ?", tenantID).
 		Preload("Messages").
 		Preload("AssignedAgent").
+		Preload("Ticket").
 		Find(&conversations).Error; err != nil {
 		return nil, err
 	}
@@ -58,6 +59,7 @@ func (r *conversationRepository) FindByID(id, tenantID string) (*entity.Conversa
 	if err := query.
 		Preload("Messages").
 		Preload("AssignedAgent").
+		Preload("Ticket").
 		First(&conversation).Error; err != nil {
 		return nil, err
 	}

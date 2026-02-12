@@ -2,7 +2,7 @@ import { useState, useMemo } from 'react';
 import { Card } from './Card';
 import { FaEdit, FaTrash, FaSearch } from 'react-icons/fa';
 
-export const DataTable = ({ columns, data, title, actions, onDelete, onEdit, isActionDisabled }) => {
+export const DataTable = ({ columns, data, title, actions, onDelete, onEdit, isActionDisabled, currentPage, totalPages, onPageChange }) => {
     const [searchTerm, setSearchTerm] = useState('');
 
     const filteredData = useMemo(() => {
@@ -97,6 +97,34 @@ export const DataTable = ({ columns, data, title, actions, onDelete, onEdit, isA
                     </tbody>
                 </table>
             </div>
+
+            {totalPages > 1 && (
+                <div className="p-4 border-t border-gray-100 bg-gray-50 flex justify-between items-center">
+                    <button
+                        onClick={() => onPageChange(currentPage - 1)}
+                        disabled={currentPage === 1}
+                        className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${currentPage === 1
+                            ? 'text-gray-400 cursor-not-allowed'
+                            : 'text-gray-600 hover:bg-gray-200'
+                            }`}
+                    >
+                        Previous
+                    </button>
+                    <span className="text-sm text-gray-600">
+                        Page {currentPage} of {totalPages}
+                    </span>
+                    <button
+                        onClick={() => onPageChange(currentPage + 1)}
+                        disabled={currentPage === totalPages}
+                        className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${currentPage === totalPages
+                            ? 'text-gray-400 cursor-not-allowed'
+                            : 'text-gray-600 hover:bg-gray-200'
+                            }`}
+                    >
+                        Next
+                    </button>
+                </div>
+            )}
         </Card>
     );
 };
